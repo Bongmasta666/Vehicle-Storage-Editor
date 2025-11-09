@@ -8,7 +8,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
 {
     public class LabeledSelector : LabeledControl
     {
-        public readonly ComboBox comboBox;
+        protected readonly ComboBox comboBox;
 
         //This may not need to be hooked up as DP unless planning on setting source in Xaml. 
         public int ItemIndex
@@ -36,7 +36,11 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
             Children.Add(comboBox);
         }
 
-        public void SetItemSource(IEnumerable source) { comboBox.ItemsSource = source; }
+        public void SetItemSource(IEnumerable source, int index = 0) 
+        {
+            comboBox.ItemsSource = source; 
+            comboBox.SelectedIndex = index;
+        }
 
         private void OnSelectionChange(object sender, SelectionChangedEventArgs e) 
         {

@@ -11,7 +11,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
 {
     public class LabeledTextBox : LabeledControl
     {
-        public readonly TextBox textBox;
+        protected readonly TextBox textBox;
 
         public string TextContent
         {

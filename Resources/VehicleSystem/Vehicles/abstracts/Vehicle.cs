@@ -8,7 +8,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
 {
     public abstract class Vehicle
     {
-        public long? ID { get; set; }
+        public int ID { get; set; }
         public int? Year { get; set; }
         public string? Make { get; set; }
         public string? Model { get; set; }
@@ -19,7 +19,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
         
         public override string ToString()
         {
-            return $"{GetType().Name} : {ID} : {Year} : {Make} : {Model}";
+            return $"ID {ID} : {GetType().Name} : {Year} : {Make} {Model}";
         }
     }
 }
