@@ -13,7 +13,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
         public string? Make { get; set; }
         public string? Model { get; set; }
         public double? Price { get; set; }
-        public string? Condition { get; set; }
+        public VehicleConditon Condition { get; set; }
 
         public Vehicle() { }
         

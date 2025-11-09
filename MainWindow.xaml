@@ -32,12 +32,12 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <customcontrols:LabeledSelector Grid.Row="0" LabelContent="Type"/>
-                        <customcontrols:LabeledSelector Grid.Row="1" LabelContent="Year"/>
+                        <customcontrols:LabeledSelector x:Name="typeSelector" Grid.Row="0" LabelContent="Type"/>
+                        <customcontrols:LabeledSelector x:Name="yearSelector" Grid.Row="1" LabelContent="Year"/>
                         <customcontrols:LabeledTextBox Grid.Row="2" LabelContent="Make"/>
                         <customcontrols:LabeledTextBox Grid.Row="3" LabelContent="Model"/>
                         <customcontrols:LabeledTextBox Grid.Row="4" LabelContent="Price"/>
-                        <customcontrols:LabeledSelector Grid.Row="5" LabelContent="Condition"/>
+                        <customcontrols:LabeledSelector x:Name="stateSelector" Grid.Row="5" LabelContent="Condition"/>
                     </Grid>
                     
                     

@@ -10,6 +10,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
     public abstract class MotorizedVehicle : Vehicle
     {
         public double Mileage { get; set; }
+        public FuelType FuelType { get; set; }
 
         public MotorizedVehicle() : base() { }
     }
