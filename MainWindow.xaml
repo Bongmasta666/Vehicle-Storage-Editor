@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Bongs_Vehicle_Viewer_V2"
+        xmlns:local="clr-namespace:Bongs_Vehicle_Viewer_V2" 
+        xmlns:customcontrols="clr-namespace:Bongs_Vehicle_Viewer_V2.Resources.CustomControls"
         mc:Ignorable="d"
         Title="Bongs Vehicle Viewer" Height="480" MinHeight="480" Width="600" WindowStartupLocation="CenterScreen">
     <Grid x:Name="rootGrid">
@@ -15,11 +16,31 @@
         
         <TabControl Grid.Row="1">
             <TabItem Header="Registration">
-                <Grid Background="#FFE5E5E5">
+                <Grid Background="WhiteSmoke">
                     <Grid.RowDefinitions>
                         <RowDefinition/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
+
+                    <Grid x:Name="propertyGrid" Margin="6" Width="140" HorizontalAlignment="Left">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <customcontrols:LabeledSelector Grid.Row="0" LabelContent="Type"/>
+                        <customcontrols:LabeledSelector Grid.Row="1" LabelContent="Year"/>
+                        <customcontrols:LabeledTextBox Grid.Row="2" LabelContent="Make"/>
+                        <customcontrols:LabeledTextBox Grid.Row="3" LabelContent="Model"/>
+                        <customcontrols:LabeledTextBox Grid.Row="4" LabelContent="Price"/>
+                        <customcontrols:LabeledSelector Grid.Row="5" LabelContent="Condition"/>
+                    </Grid>
+                    
+                    
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">
                         <Button x:Name="submitBtn" Content="Submit" Width="64" Margin="4,2" FontSize="14"/>
                         <Button x:Name="resetBtn" Content="Reset" Width="64" Margin="4,2" FontSize="14"/>
