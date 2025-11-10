@@ -49,7 +49,11 @@
             </TabItem>
             <TabItem Header="Catalogue">
                 <Grid Background="#FFE5E5E5">
-                    <DataGrid x:Name="dataGrid" IsReadOnly="True" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid x:Name="dataGrid" Grid.Row="0" IsReadOnly="True" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Width="0.8*" Binding="{Binding ID}"/>
                             <DataGridTextColumn Header="Class" Width="*" Binding="{Binding Class}"/>
@@ -60,20 +64,32 @@
                             <DataGridTextColumn Header="Condition" Width="*" Binding="{Binding Condition}"/>
                         </DataGrid.Columns>
                     </DataGrid>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">
+                        <Button x:Name="editBtn" Content="Edit" Width="64" Margin="4,2" FontSize="14"/>
+                        <Button x:Name="removeBtn" Content="Remove" Width="64" Margin="4,2" FontSize="14" Click="OnRemoveBtnPress"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
             <TabItem Header="Statistics">
                 <Grid Background="#FFE5E5E5">
                     <StackPanel>
                         <Label x:Name="totalTracker" Content="Total Vehicles: 0"/>
+                        <Label x:Name="motorizedTracker" Content="Motorized Vehicles: 0"/>
+                        <Label x:Name="aerialTracker" Content="Aerial Vehicles: 0"/>
+                        <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>
+                        <Label x:Name="priceTracker" Content="Total Price: 0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>
 
         <StatusBar Grid.Row="2">
-            <StatusBarItem>
-                <Label x:Name="statusOutput" Content="System:" Padding="1"/>
+            <StatusBarItem HorizontalAlignment="Left">
+                <Label x:Name="statusOutput" Content="System:" Padding="1" HorizontalAlignment="Left"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <Label x:Name="timeLabel" Content="00:00:00" Padding="1" HorizontalAlignment="Right"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
