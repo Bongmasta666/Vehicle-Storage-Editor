@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -20,6 +21,8 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         private static Dictionary<int, Vehicle> Vehicles = [];
 
+        public static event EventHandler? VehicleAdded;
+
         public static Vehicle NewVehicle(int typeIndex)
         {
             Vehicle v = (Vehicle)Activator.CreateInstance(VehicleTypes[typeIndex]);
@@ -32,9 +35,12 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             if (Vehicles.TryAdd(vehicle.ID, vehicle))
             {
                 vehicleUid++;
+                VehicleAdded?.Invoke(null, new EventArgs());
                 return true;
             }
             return false;
         }
+
+        public static List<Vehicle> GetVehicleList() => [.. Vehicles.Values]; //Simplified ToList().
     }
 }

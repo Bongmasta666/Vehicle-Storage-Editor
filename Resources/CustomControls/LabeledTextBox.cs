@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
 {
@@ -22,6 +23,9 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
         public static readonly DependencyProperty TextContentProperty =
             DependencyProperty.Register("TextContent", typeof(string), typeof(LabeledTextBox), new PropertyMetadata(""));
 
+        public Brush TBoxBgNormal { get; protected set; } = Brushes.White;
+        public Brush TBoxBgHighlight { get; protected set; } = Brushes.MistyRose;
+
         public LabeledTextBox() : base()
         {
             textBox = new TextBox()
@@ -30,7 +34,18 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
             };
 
             textBox.SetBinding(TextBox.TextProperty, new Binding("TextContent") { Source = this, FallbackValue = "" });
+            textBox.GotFocus += OnFocus;
             Children.Add(textBox);
         }
+
+        private void OnFocus(object obj, RoutedEventArgs args) => textBox.Background = TBoxBgNormal;
+
+        public void Reset() 
+        {
+            textBox.Background = TBoxBgNormal;
+            TextContent = string.Empty;
+        }
+
+        public void HighLight() => textBox.Background = TBoxBgHighlight;
     }
 }

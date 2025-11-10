@@ -49,15 +49,15 @@
             </TabItem>
             <TabItem Header="Catalogue">
                 <Grid Background="#FFE5E5E5">
-                    <DataGrid IsReadOnly="True" SelectionMode="Single" AutoGenerateColumns="False">
+                    <DataGrid x:Name="dataGrid" IsReadOnly="True" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Width="0.8*" Binding="{Binding ID}"/>
-                            <DataGridTextColumn Header="Class" Width="*"/>
+                            <DataGridTextColumn Header="Class" Width="*" Binding="{Binding Class}"/>
                             <DataGridTextColumn Header="Make" Width="*" Binding="{Binding Make}"/>
                             <DataGridTextColumn Header="Model" Width="*" Binding="{Binding Model}"/>
                             <DataGridTextColumn Header="Year" Width="*" Binding="{Binding Year}"/>
                             <DataGridTextColumn Header="Price" Width="*" Binding="{Binding Price, StringFormat=C}"/>
-                            <DataGridTextColumn Header="Condition" Width="*" Binding="{Binding State}"/>
+                            <DataGridTextColumn Header="Condition" Width="*" Binding="{Binding Condition}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

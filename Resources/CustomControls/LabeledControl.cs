@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
 {
@@ -27,8 +28,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
             label = new Label()
             {
                 FontSize = 14,
-                Padding = new Thickness(1,1,4,1),
-                Margin = new Thickness(2, 0, 0, 0),
+                Padding = new Thickness(1, 1, 4, 1),   
                 FontWeight = FontWeights.SemiBold,
             };
 

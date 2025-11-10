@@ -1,4 +1,5 @@
-﻿using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
+﻿using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using System.CodeDom;
 using System.Diagnostics;
@@ -34,45 +35,69 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
         {
-            //Rough and Quick Validation
-            if (makeTextBox.TextContent == "")
-            {
-                statusOutput.Content = "System: Make Cannot Be Blank"; return;
-            }
+            //This validation still sucks. W.I.P.
+            string log = "";
+            log += ValidateTextBox(makeTextBox);
+            log += ValidateTextBox(modelTextBox);
+            log += ValidateTextBox(priceTextBox);
 
-            if (modelTextBox.TextContent == "")
+            if (double.TryParse(priceTextBox.TextContent, out double value))
             {
-                statusOutput.Content = "System: Model Cannot Be Blank"; return;
-            }
-
-            double value;
-            if (priceTextBox.TextContent != "")
-            {
-                if (double.TryParse(priceTextBox.TextContent, out value))
+                if (value < 0)
                 {
-                    if (value < 0) { statusOutput.Content = "System: Price Cannot Be Negative"; return; }
+                    log += "System: Price Cannot Be Negative";
+                    priceTextBox.HighLight();
                 }
-                else { statusOutput.Content = "System: Price Must Be Numeric"; return; }
             }
-            else { statusOutput.Content = "System: Price Cannot Be Blank"; return; }
+            else
+            {
+                log += "System: Price Must Be Numeric";
+                priceTextBox.HighLight();
+            }
 
-            //Creating Vehicle
-            Vehicle v = VehicleFactory.NewVehicle(typeSelector.ItemIndex);
+            if (log == "")
+            {
+                //Vehicle factory is called alot here. This could use some improvement. 
+                Vehicle v = VehicleFactory.NewVehicle(typeSelector.ItemIndex);
+                AssignVehicleValues(v);
+
+                if (VehicleFactory.AddVehicle(v))
+                {
+                    ResetRegistration();
+                    dataGrid.ItemsSource = VehicleFactory.GetVehicleList();
+                    statusOutput.Content = "System: " + v.ToString() + " added successfully";
+                }
+                else { statusOutput.Content = "System: Failed To Add Vehicle"; }
+            }
+        }
+
+        //Right now this assumes the price checkbox has already been confirmed to be a double.
+        //Todo: Price will probably be parsed before this. Try reducing the need to parse again.
+        //Solution: Passing as argument may be the best solution unfortunatley.
+        private void AssignVehicleValues(Vehicle v)
+        {
             v.Year = ValidYears[yearSelector.ItemIndex];
             v.Make = makeTextBox.TextContent;
             v.Model = modelTextBox.TextContent;
-            v.Price = value;
+            v.Price = double.Parse(priceTextBox.TextContent);
             v.Condition = (VehicleConditon)stateSelector.ItemIndex;
-
-            //Adding Vehicle
-            if (VehicleFactory.AddVehicle(v)) 
-            {
-                statusOutput.Content = "System: " + v.ToString() + " added successfully";
-            }
-            else { statusOutput.Content = "System: Failed To Add Vehicle"; }  
         }
 
-        private void OnResetBtnPress(object obj, RoutedEventArgs args)
+        //Maybe make this a function that can be call on the text.
+        private static string ValidateTextBox(LabeledTextBox textBox)
+        {
+            string toReturn = "";
+            if (string.IsNullOrEmpty(textBox.TextContent))
+            {
+                textBox.HighLight();
+                toReturn = $"System: {textBox.TextContent} Cannot Be Blank";
+            } 
+            return toReturn;
+        }
+
+        private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetRegistration();
+
+        public void ResetRegistration()
         {
             typeSelector.ItemIndex = 0;
             yearSelector.ItemIndex = 0;
@@ -82,7 +107,6 @@ namespace Bongs_Vehicle_Viewer_V2
             modelTextBox.TextContent = string.Empty;
             priceTextBox.TextContent = string.Empty;
         }
-
 
         //Should Probably Put On Vehicle Factory or Something
         public static List<int> GetValidYears(int start, int end, bool flip = true)
