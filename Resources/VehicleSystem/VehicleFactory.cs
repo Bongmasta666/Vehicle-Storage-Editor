@@ -24,43 +24,31 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
         {
             if (!TypeDictonary.TryGetValue(type, out Type? vehicle)) { return null; }
             Vehicle v = (Vehicle)Activator.CreateInstance(vehicle);
-            v.ID = vehicleUid;
             return v;
         }
 
-        //At this point its possible to get values needed for tracking and update tracker if added.
         public static bool AddVehicle(Vehicle vehicle)
         {
+            if (vehicle.ID == -1) { vehicle.ID = vehicleUid++; }
             if (Vehicles.TryAdd(vehicle.ID, vehicle))
             {
-                VehicleAdded?.Invoke(null, new EventArgs());
-                SaveVehicleList();
-                vehicleUid++;
+                TallyVehicle(vehicle);
                 return true;
             }
             return false;
         }
 
-        //At this point its possible to get values needed for tracking and update tracker if added.
         public static bool RemoveVehicle(int id)
         {
-            if (Vehicles.Remove(id))
+            if (Vehicles.TryGetValue(id, out Vehicle? v))
             {
-                SaveVehicleList();
+                TallyVehicle(v, true);
+                Vehicles.Remove(id);
                 return true;
             }
             return false;
         }
 
-        public static bool SetVehicle(Vehicle vehicle)
-        {
-            if (Vehicles.ContainsKey(vehicle.ID))
-            {
-                Vehicles[vehicleUid] = vehicle;
-                return true;
-            }
-            return false;
-        }
         // Where Conditon: IsAssignable gets all sub-classes inclduing itself then we filter out abstracts.
         private static Dictionary<string, Type> GetTypeDictonary(Type classType, bool includeAbstract = false)
         {
@@ -98,6 +86,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
                     {
                         Vehicle v = (Vehicle)JsonSerializer.Deserialize(item, t);
                         Vehicles.Add(v.ID, v);
+                        TallyVehicle(v);
                     }
                 }
             }
@@ -112,6 +101,20 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             File.WriteAllText("vehicles.json", json);
         }
 
+        //String literals suck. Maybe Just compare type with typeof or make enum.
+        public static void TallyVehicle(Vehicle vehicle, bool remove = false)
+        {
+            TotalPrice += (remove) ? -vehicle.Price: vehicle.Price;
+            int value = (remove) ? -1 : 1;
+            switch (vehicle.GetType().BaseType.Name) // This can maybe be abstracted
+            {
+                case "AerialVehicle": AerialVehicles += value; break;
+                case "AquaticVehicle": AquaticVehicles += value; break;
+                case "MotorizedVehicle": MotorizedVehicles += value; break;
+                default: break;
+            }
+        }
+
         //Kinda Temporary Tracking.
         //Todo: Create variables to store totals and get data when vehicle is added.
         #region TrackerStuff
@@ -122,31 +125,12 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
         public static int AquaticVehicles { get; private set; } = 0;
         public static double TotalPrice { get; private set; } = 0;
 
-        //This is just for convience/validation.
         public static double GetTotalPrice() 
         {
             double total = 0.0;
             foreach (Vehicle v in Vehicles.Values) { total += v.Price; }
             return total;
-        } 
-
-        // FIX THIS ASAP !!!!! 
-        //This is not really working atm because we are just simply adding without resetting.
-        public static void UpdateStats()
-        {
-            foreach (Vehicle v in Vehicles.Values)
-            {
-                TotalPrice += v.Price;
-                switch (v.GetType().BaseType.Name)
-                {
-                    //String literals suck. Maybe Just compare type with typeof or make enum.
-                    case "AerialVehicle": AerialVehicles++; break;
-                    case "AquaticVehicle": AquaticVehicles++; break;
-                    case "MotorizedVehicle": MotorizedVehicles++; break;
-                    default: break;
-                }
-            }
-        }      
+        }     
 
         #endregion TrackerStuff
     }

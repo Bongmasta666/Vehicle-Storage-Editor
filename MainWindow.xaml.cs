@@ -44,28 +44,35 @@ namespace Bongs_Vehicle_Viewer_V2
             double value = GetPriceValue();
             if (value == -1) { log += "Price Must Be A Positive Numeric Value"; }
 
-            if (log == "") 
+            //This currently works, but could be handled better.
+            if (log == "")  
             {
+                Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
+                AssignVehicleValues(v, value);
                 if (isEditing && Selected != null)
                 {
-                    AssignVehicleValues(Selected, value);
-                    UnselectItem();
-                    RefreshData();
-                    tabControl.SelectedIndex = 1;
-                    VehicleFactory.SaveVehicleList();
-                }
-                else  //Vehicle factory is called alot here. This could use some improvement. 
-                {
-                    Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
-                    AssignVehicleValues(v, value);
-
-                    if (VehicleFactory.AddVehicle(v)) 
+                    v.ID = Selected.ID;
+                    if (!VehicleFactory.RemoveVehicle(Selected.ID))
                     {
-                        RefreshData();
-                        DisplaySystemMessage("Vehicle added successfully");
+                        DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE");
+                        return;
                     }
-                    else { DisplaySystemMessage("Failed To Add Vehicle"); }
                 }
+
+                if (VehicleFactory.AddVehicle(v))
+                {
+                    if (isEditing)
+                    {
+                        UnselectItem();
+                        tabControl.SelectedIndex = 1;
+                        DisplaySystemMessage("Vehicle was edited succesfully");
+                    }
+                    else { DisplaySystemMessage("Vehicle was added succesfully"); }
+                }
+                else { DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); }
+
+                RefreshData();
+                VehicleFactory.SaveVehicleList();
             }
         }
 
@@ -122,6 +129,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     UpdateStats();
                     RefreshDataGrid();
                     DisplaySystemMessage("Vehicle removed successfully");
+                    VehicleFactory.SaveVehicleList();
                 }
             }
         }
@@ -172,7 +180,6 @@ namespace Bongs_Vehicle_Viewer_V2
         
         private void UpdateStats()
         {
-            VehicleFactory.UpdateStats();
             totalTracker.Content = $"Total Vehicles: {VehicleFactory.VehicleCount}";
             priceTracker.Content = $"Total Price: {VehicleFactory.TotalPrice:C}";
             motorizedTracker.Content = $"Motorized Vehicles: {VehicleFactory.MotorizedVehicles}";

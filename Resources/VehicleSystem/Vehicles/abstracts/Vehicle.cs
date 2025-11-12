@@ -10,7 +10,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
     public abstract class Vehicle
     {
         public string Class => GetType().Name;
-        public int ID { get; set; } = 0;
+        public int ID { get; set; } = -1;
         public int Year { get; set; } = 0;
         public string Make { get; set; } = "";
         public string Model { get; set; } = "";
