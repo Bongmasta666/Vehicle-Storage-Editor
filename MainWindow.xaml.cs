@@ -1,26 +1,9 @@
-﻿using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Threading;
+using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 
 namespace Bongs_Vehicle_Viewer_V2
 {
@@ -30,8 +13,8 @@ namespace Bongs_Vehicle_Viewer_V2
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 50, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
-        private Vehicle? selected = null;
-        
+        public Vehicle? Selected { get; private set; } = null;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -44,7 +27,8 @@ namespace Bongs_Vehicle_Viewer_V2
             timer.Tick += (obj, args) => { timeLabel.Content = DateTime.Now.ToLongTimeString(); };
             timer.Start();
 
-            LoadAllVehicles();
+            VehicleFactory.LoadAllVehicles();
+            UpdateDataGrid();
         }
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
@@ -62,21 +46,32 @@ namespace Bongs_Vehicle_Viewer_V2
                     log += "Price Cannot Be Negative";
                     priceTextBox.HighLight();
                 }
-            } 
+            }
             else
             {
                 log += "Price Must Be Numeric";
                 priceTextBox.HighLight();
             }
 
-            if (log == "")
+            if (log == "")  //Vehicle factory is called alot here. This could use some improvement. 
             {
-                //Vehicle factory is called alot here. This could use some improvement. 
-                Vehicle v = VehicleFactory.NewVehicle(typeSelector.ItemName);
-                AssignVehicleValues(v, value);
+                if (Selected != null)
+                {
+                    AssignVehicleValues(Selected, value);
+                    ResetFields();
+                    UpdateDataGrid();
+                    UpdateStats();
+                    tabControl.SelectedIndex = 1;
+                    VehicleFactory.SaveVehicleList();
+                }
+                else
+                {
+                    Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
+                    AssignVehicleValues(v, value);
 
-                if (VehicleFactory.AddVehicle(v)) { OnVehicleAdded(); }
-                else { DisplaySystemMessage("Failed To Add Vehicle"); }
+                    if (VehicleFactory.AddVehicle(v)) { OnVehicleAdded(); }
+                    else { DisplaySystemMessage("Failed To Add Vehicle"); }
+                }     
             }
         }
 
@@ -84,10 +79,12 @@ namespace Bongs_Vehicle_Viewer_V2
         private void OnVehicleAdded()
         {
             ResetRegistration();
-            dataGrid.ItemsSource = VehicleFactory.GetVehicleList();
-            DisplaySystemMessage("Vehicle added successfully");
+            UpdateDataGrid();
             UpdateStats();
+            DisplaySystemMessage("Vehicle added successfully");
         }
+
+        private void UpdateDataGrid() => dataGrid.ItemsSource = VehicleFactory.Vehicles.Values.ToList();
 
         //Price is passed here to avoid another parse. Can this be better?
         private void AssignVehicleValues(Vehicle v, double price)
@@ -103,8 +100,12 @@ namespace Bongs_Vehicle_Viewer_V2
 
         public void ResetRegistration()
         {
-            selected = null; //Maybe Not Here, But for now.
+            ResetFields();
+            UnselectItem();
+        }
 
+        public void ResetFields()
+        {
             typeSelector.ItemIndex = 0;
             yearSelector.ItemIndex = 0;
             stateSelector.ItemIndex = 0;
@@ -116,35 +117,38 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnVehicleSelected(object obj, SelectionChangedEventArgs args)
         {
-            if (obj != null) 
-            { 
-                selected = (Vehicle)dataGrid.SelectedItem; 
+            if (obj != null)
+            {
+                Selected = (Vehicle)dataGrid.SelectedItem;
+                unselectBtn.IsEnabled = true;
             }
-            else { selected = null; }
+            else { Selected = null; }
         }
 
         private void OnRemoveBtnPress(object obj, RoutedEventArgs args)
         {
-            if (selected != null) { RemoveVehicle(selected); }
+            if (Selected != null) { RemoveVehicle(Selected); }
         }
 
         private void RemoveVehicle(Vehicle v)
         {
             if (VehicleFactory.RemoveVehicle(v.ID))
             {
+                UnselectItem();
                 UpdateStats();
-                dataGrid.ItemsSource = VehicleFactory.GetVehicleList();
+                UpdateDataGrid();
                 DisplaySystemMessage("Vehicle removed successfully");
             }
         }
 
         private void OnEditBtnPress(object obj, RoutedEventArgs ars)
         {
-            if (selected != null) 
+            if (Selected != null)
             {
                 tabControl.SelectedIndex = 0;
-                PopulateFields(selected);
-            }       
+                PopulateFields(Selected);
+                submitBtn.Content = "Update";
+            }
         }
 
         public void PopulateFields(Vehicle v)
@@ -167,8 +171,7 @@ namespace Bongs_Vehicle_Viewer_V2
             aquaticTracker.Content = $"Aquatic Vehicles: {VehicleFactory.AquaticVehicles}";
         }
 
-        public void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveVehicleList();
-
+        //This Kinda sucks but is semi-helpful atm.
         private static string ValidateTextBox(LabeledTextBox textBox)
         {
             if (textBox.IsNullOrEmpty(true))
@@ -183,32 +186,15 @@ namespace Bongs_Vehicle_Viewer_V2
             statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
         }
 
-
-
-        //Quick Rough Loading. Needs Abstraction and Adding vehicle this way increments the ID sequence.
-        //Sequence value can either be saved or it's possible to order by ID and get the highest value.
-        public void LoadAllVehicles()
+        public void UnselectItem()
         {
-            var contents = File.ReadAllText("vehicles.txt");
-            List<JsonElement> vehicles = JsonSerializer.Deserialize<List<JsonElement>>(contents);
-            foreach (var item in vehicles)
-            {
-                if (item.TryGetProperty("Class", out JsonElement prop))
-                {
-                    if (VehicleFactory.TypeDictonary.TryGetValue(prop.ToString(), out Type t))
-                    {
-                        Vehicle v = (Vehicle)JsonSerializer.Deserialize(item, t);
-                        VehicleFactory.AddVehicle(v);
-                    }          
-                }              
-            }
-            dataGrid.ItemsSource = VehicleFactory.GetVehicleList();
+            Selected = null; 
+            dataGrid.SelectedIndex = -1;
+            unselectBtn.IsEnabled = false;
+            submitBtn.Content = "Submit";
         }
 
-        public static void SaveVehicleList()
-        {
-            var json = JsonSerializer.Serialize(VehicleFactory.GetVehicleList());
-            File.WriteAllText("vehicles.txt", json);
-        }
+        //This is hooked up to a btn, but Saving Is Done On Every ADD or REMOVE ATM..
+        public void OnUnselectBtnPress(object obj, RoutedEventArgs args) { UnselectItem(); }
     }
 }

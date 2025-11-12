@@ -68,7 +68,7 @@
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">
                         <Button x:Name="editBtn" Content="Edit" Width="64" Margin="4,2" FontSize="14" Click="OnEditBtnPress"/>
                         <Button x:Name="removeBtn" Content="Remove" Width="64" Margin="4,2" FontSize="14" Click="OnRemoveBtnPress"/>
-                        <Button x:Name="saveBtn" Content="Save" Width="64" Margin="4,2" FontSize="14" Click="OnSaveBtnPress"/>
+                        <Button x:Name="unselectBtn" Content="Unselect" Width="64" Margin="4,2" FontSize="14" Click="OnUnselectBtnPress" IsEnabled="False"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
