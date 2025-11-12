@@ -46,6 +46,16 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
             TextContent = string.Empty;
         }
 
+        public bool IsNullOrEmpty(bool highlight)
+        {
+            if (string.IsNullOrEmpty(TextContent))
+            {
+                if (highlight) { HighLight(); }
+                return true;
+            }
+            return false;
+        }
+
         public void HighLight() => textBox.Background = TBoxBgHighlight;
     }
 }

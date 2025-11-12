@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
@@ -13,17 +15,17 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 {
     public static class VehicleFactory
     {
-        // Where Conditon: IsAssignable gets all sub-classes inclduing itself then we filter out abstracts.
-        public readonly static List<Type> VehicleTypes = Assembly.GetExecutingAssembly().GetTypes()
-                .Where(t => typeof(Vehicle).IsAssignableFrom(t) && !t.IsAbstract).ToList();
+        public readonly static Dictionary<string, Type> TypeDictonary = GetTypeDictonary(typeof(Vehicle));
 
         private static int vehicleUid = 100200;
 
         public static event EventHandler? VehicleAdded;
 
-        public static Vehicle NewVehicle(int typeIndex)
+        //Returns a vehicle type with an ID value if the 'type' is found otherwise returns Null.
+        public static Vehicle? NewVehicle(string type)
         {
-            Vehicle v = (Vehicle)Activator.CreateInstance(VehicleTypes[typeIndex]);
+            if (!TypeDictonary.TryGetValue(type, out Type? vehicle)) { return null; }
+            Vehicle v = (Vehicle)Activator.CreateInstance(vehicle);
             v.ID = vehicleUid;
             return v;
         }
@@ -49,6 +51,29 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
                 return true;
             }
             return false;
+        }
+
+        // Where Conditon: IsAssignable gets all sub-classes inclduing itself then we filter out abstracts.
+        private static Dictionary<string, Type> GetTypeDictonary(Type classType, bool includeAbstract = false)
+        {
+            if (!classType.IsClass) { throw new ArgumentException($"Unable to create a Type Dictionary of Type {nameof(classType)}"); }
+            return Assembly.GetExecutingAssembly().GetTypes()
+                .Where(t => classType.IsAssignableFrom(t) && t.IsAbstract == includeAbstract).ToDictionary(t => t.Name, t => t);
+        }
+
+        public static List<string> GetClassNames()
+        {
+            List<string> names = [];
+            foreach (Type t in TypeDictonary.Values) { names.Add(t.Name); }
+            return names;
+        }
+
+        public static List<int> GetValidYears(int start, int end, bool flip = true)
+        {
+            List<int> years = [];
+            for (int i = start; i < end; i++) { years.Add(i); }
+            if (flip) { years.Reverse(); }
+            return years;
         }
 
         //Kinda Temporary Tracking.
