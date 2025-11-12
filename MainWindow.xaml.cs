@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
@@ -28,7 +29,7 @@ namespace Bongs_Vehicle_Viewer_V2
             timer.Start();
 
             VehicleFactory.LoadAllVehicles();
-            UpdateDataGrid();
+            RefreshDataGrid();
         }
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
@@ -39,52 +40,40 @@ namespace Bongs_Vehicle_Viewer_V2
             log += ValidateTextBox(modelTextBox);
             log += ValidateTextBox(priceTextBox);
 
-            if (double.TryParse(priceTextBox.TextContent, out double value))
-            {
-                if (value < 0)
-                {
-                    log += "Price Cannot Be Negative";
-                    priceTextBox.HighLight();
-                }
-            }
-            else
-            {
-                log += "Price Must Be Numeric";
-                priceTextBox.HighLight();
-            }
+            double value = GetPriceValue();
+            if (value == -1) { log += "Price Must Be A Positive Numeric Value"; }
 
-            if (log == "")  //Vehicle factory is called alot here. This could use some improvement. 
+            if (log == "") 
             {
                 if (Selected != null)
                 {
                     AssignVehicleValues(Selected, value);
-                    ResetFields();
-                    UpdateDataGrid();
-                    UpdateStats();
+                    RefreshData();
                     tabControl.SelectedIndex = 1;
                     VehicleFactory.SaveVehicleList();
                 }
-                else
+                else  //Vehicle factory is called alot here. This could use some improvement. 
                 {
                     Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
                     AssignVehicleValues(v, value);
 
-                    if (VehicleFactory.AddVehicle(v)) { OnVehicleAdded(); }
+                    if (VehicleFactory.AddVehicle(v)) 
+                    {
+                        RefreshData();
+                        DisplaySystemMessage("Vehicle added successfully");
+                    }
                     else { DisplaySystemMessage("Failed To Add Vehicle"); }
-                }     
+                }
             }
         }
 
-        //Register this to an event and/or put this function somewhere else
-        private void OnVehicleAdded()
+        //Kinda Temporary untill statistics tracking is better.
+        private void RefreshData()
         {
-            ResetRegistration();
-            UpdateDataGrid();
+            ResetFields();
+            RefreshDataGrid();
             UpdateStats();
-            DisplaySystemMessage("Vehicle added successfully");
         }
-
-        private void UpdateDataGrid() => dataGrid.ItemsSource = VehicleFactory.Vehicles.Values.ToList();
 
         //Price is passed here to avoid another parse. Can this be better?
         private void AssignVehicleValues(Vehicle v, double price)
@@ -136,7 +125,7 @@ namespace Bongs_Vehicle_Viewer_V2
             {
                 UnselectItem();
                 UpdateStats();
-                UpdateDataGrid();
+                RefreshDataGrid();
                 DisplaySystemMessage("Vehicle removed successfully");
             }
         }
@@ -145,9 +134,9 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Selected != null)
             {
-                tabControl.SelectedIndex = 0;
                 PopulateFields(Selected);
                 submitBtn.Content = "Update";
+                tabControl.SelectedIndex = 0;
             }
         }
 
@@ -171,19 +160,26 @@ namespace Bongs_Vehicle_Viewer_V2
             aquaticTracker.Content = $"Aquatic Vehicles: {VehicleFactory.AquaticVehicles}";
         }
 
-        //This Kinda sucks but is semi-helpful atm.
+        //These is semi-useless. Just helps reduce repeatition atm.
         private static string ValidateTextBox(LabeledTextBox textBox)
         {
-            if (textBox.IsNullOrEmpty(true))
+            if (textBox.IsNullOrEmpty(true)) 
             {
-                return $"{textBox.TextContent} Cannot Be Blank";
+                return $"{textBox.TextContent} Cannot Be Blank"; 
             }
-            return "";
+            return "";              
         }
 
-        public void DisplaySystemMessage(string message)
+        private double GetPriceValue()
         {
-            statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
+            double toReturn = -1;
+            if (double.TryParse(priceTextBox.TextContent, out double value))
+            {
+                if (value >= 0.0) { toReturn = value; }
+                else { priceTextBox.HighLight(); }
+            }
+            else { priceTextBox.HighLight(); }
+            return toReturn;
         }
 
         public void UnselectItem()
@@ -194,7 +190,12 @@ namespace Bongs_Vehicle_Viewer_V2
             submitBtn.Content = "Submit";
         }
 
-        //This is hooked up to a btn, but Saving Is Done On Every ADD or REMOVE ATM..
-        public void OnUnselectBtnPress(object obj, RoutedEventArgs args) { UnselectItem(); }
+        public void DisplaySystemMessage(string message)
+        {
+            statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
+        }
+
+        public void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
+        public void RefreshDataGrid() => dataGrid.ItemsSource = VehicleFactory.Vehicles.Values.ToList();
     }
 }
