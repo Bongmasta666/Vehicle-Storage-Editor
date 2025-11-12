@@ -130,6 +130,8 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return total;
         } 
 
+        // FIX THIS ASAP !!!!! 
+        //This is not really working atm because we are just simply adding without resetting.
         public static void UpdateStats()
         {
             foreach (Vehicle v in Vehicles.Values)
@@ -144,22 +146,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
                     default: break;
                 }
             }
-        }
-
-        public static int GetVehiclesCount(string type)
-        {
-            int total = 0;
-            foreach (Vehicle v in Vehicles.Values) 
-            {
-                if (v.GetType().BaseType.Name == type)
-                {
-                    total++;
-                }
-            }
-            return total;
-        }
-
-       
+        }      
 
         #endregion TrackerStuff
     }

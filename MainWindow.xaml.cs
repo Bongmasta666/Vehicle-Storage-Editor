@@ -15,6 +15,7 @@ namespace Bongs_Vehicle_Viewer_V2
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
         public Vehicle? Selected { get; private set; } = null;
+        public bool isEditing = false;
 
         public MainWindow()
         {
@@ -29,7 +30,7 @@ namespace Bongs_Vehicle_Viewer_V2
             timer.Start();
 
             VehicleFactory.LoadAllVehicles();
-            RefreshDataGrid();
+            RefreshData();
         }
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
@@ -45,9 +46,10 @@ namespace Bongs_Vehicle_Viewer_V2
 
             if (log == "") 
             {
-                if (Selected != null)
+                if (isEditing && Selected != null)
                 {
                     AssignVehicleValues(Selected, value);
+                    UnselectItem();
                     RefreshData();
                     tabControl.SelectedIndex = 1;
                     VehicleFactory.SaveVehicleList();
@@ -67,14 +69,6 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        //Kinda Temporary untill statistics tracking is better.
-        private void RefreshData()
-        {
-            ResetFields();
-            RefreshDataGrid();
-            UpdateStats();
-        }
-
         //Price is passed here to avoid another parse. Can this be better?
         private void AssignVehicleValues(Vehicle v, double price)
         {
@@ -85,7 +79,13 @@ namespace Bongs_Vehicle_Viewer_V2
             v.Price = price;
         }
 
-        private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetRegistration();
+        //Kinda Temporary untill statistics tracking is better.
+        private void RefreshData()
+        {
+            ResetFields();
+            RefreshDataGrid();
+            UpdateStats();
+        }
 
         public void ResetRegistration()
         {
@@ -93,40 +93,36 @@ namespace Bongs_Vehicle_Viewer_V2
             UnselectItem();
         }
 
-        public void ResetFields()
+        //The below three functions somewhat work for now but need improving.
+        private void OnVehicleSelected(object obj, RoutedEventArgs args)
         {
-            typeSelector.ItemIndex = 0;
-            yearSelector.ItemIndex = 0;
-            stateSelector.ItemIndex = 0;
-
-            makeTextBox.TextContent = string.Empty;
-            modelTextBox.TextContent = string.Empty;
-            priceTextBox.TextContent = string.Empty;
-        }
-
-        private void OnVehicleSelected(object obj, SelectionChangedEventArgs args)
-        {
-            if (obj != null)
+            if (dataGrid.SelectedIndex != -1)
             {
-                Selected = (Vehicle)dataGrid.SelectedItem;
+                editBtn.IsEnabled = true;
+                removeBtn.IsEnabled = true;
                 unselectBtn.IsEnabled = true;
+                Selected = (Vehicle)dataGrid.SelectedItem;
             }
-            else { Selected = null; }
-        }
-
-        private void OnRemoveBtnPress(object obj, RoutedEventArgs args)
-        {
-            if (Selected != null) { RemoveVehicle(Selected); }
-        }
-
-        private void RemoveVehicle(Vehicle v)
-        {
-            if (VehicleFactory.RemoveVehicle(v.ID))
+            else 
             {
-                UnselectItem();
-                UpdateStats();
-                RefreshDataGrid();
-                DisplaySystemMessage("Vehicle removed successfully");
+                editBtn.IsEnabled = false;
+                removeBtn.IsEnabled = false;
+                unselectBtn.IsEnabled = false;
+                Selected = null; 
+            }
+        }
+
+        private void RemoveVehicle()
+        {
+            if (Selected != null)
+            {
+                if (VehicleFactory.RemoveVehicle(Selected.ID))
+                {
+                    UnselectItem();
+                    UpdateStats();
+                    RefreshDataGrid();
+                    DisplaySystemMessage("Vehicle removed successfully");
+                }
             }
         }
 
@@ -134,9 +130,11 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Selected != null)
             {
+                isEditing = true;
                 PopulateFields(Selected);
-                submitBtn.Content = "Update";
                 tabControl.SelectedIndex = 0;
+                submitBtn.Content = "Update";
+                typeSelector.IsEnabled = false;
             }
         }
 
@@ -150,6 +148,28 @@ namespace Bongs_Vehicle_Viewer_V2
             stateSelector.ItemIndex = (int)v.Condition;
         }
 
+        public void ResetFields()
+        {
+            typeSelector.IsEnabled = true;
+
+            typeSelector.ItemIndex = 0;
+            yearSelector.ItemIndex = 0;
+            stateSelector.ItemIndex = 0;
+
+            makeTextBox.TextContent = string.Empty;
+            modelTextBox.TextContent = string.Empty;
+            priceTextBox.TextContent = string.Empty;
+
+            submitBtn.Content = "Submit";
+        }
+
+        public void UnselectItem()
+        {
+            Selected = null;
+            isEditing = false;
+            dataGrid.SelectedIndex = -1;
+        }
+        
         private void UpdateStats()
         {
             VehicleFactory.UpdateStats();
@@ -182,20 +202,15 @@ namespace Bongs_Vehicle_Viewer_V2
             return toReturn;
         }
 
-        public void UnselectItem()
-        {
-            Selected = null; 
-            dataGrid.SelectedIndex = -1;
-            unselectBtn.IsEnabled = false;
-            submitBtn.Content = "Submit";
-        }
 
         public void DisplaySystemMessage(string message)
         {
             statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
         }
 
-        public void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
+        private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetRegistration();
+        private void OnRemoveBtnPress(object obj, RoutedEventArgs args) => RemoveVehicle();
+        private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
         public void RefreshDataGrid() => dataGrid.ItemsSource = VehicleFactory.Vehicles.Values.ToList();
     }
 }
