@@ -1,25 +1,28 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Threading;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
+using System.Windows.Controls;
+using System.Diagnostics;
 
 namespace Bongs_Vehicle_Viewer_V2
 {
     public partial class MainWindow : Window
     {
-        //Maybe Move These
+        public VehicleStorage Storage { get; private set; }
+        public Vehicle? Selected { get; private set; } = null;
+        public bool IsEditing { get; private set; } = false;
+
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 50, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
-
-        public Vehicle? Selected { get; private set; } = null;
-        public bool isEditing = false;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            Storage = new VehicleStorage("Test");
 
             typeSelector.SetItemSource(classNames);
             yearSelector.SetItemSource(ValidYears);
@@ -29,8 +32,50 @@ namespace Bongs_Vehicle_Viewer_V2
             timer.Tick += (obj, args) => { timeLabel.Content = DateTime.Now.ToLongTimeString(); };
             timer.Start();
 
-            VehicleFactory.LoadAllVehicles();
+            Storage.LoadAllVehicles();
             RefreshData();
+        }
+
+        //Build out properties programmatically. WIP
+        //Certain props will always be available, these should be pre built.
+        //Then build extended props followed by concreate props.
+        //This will make a dynamic form easier but we will have to do something about validating dynamic props. 
+        //private void TestFoo(object obj, SelectionChangedEventArgs args)
+        //{
+        //    testGrid.Children.Clear();
+        //    Type type = VehicleFactory.TypeDictonary[typeSelector.ItemName];
+        //    var props = type.GetProperties();
+        //    foreach (var item in props)
+        //    {
+        //        LabeledControl? p;
+        //        Type t = item.PropertyType;
+        //        if (item.Name == "ID") { continue; }
+        //        else if (item.Name == "Class")
+        //        {
+        //            p = BuildSelector(item.Name, classNames);
+        //        }
+        //        else if (item.Name == "Year")
+        //        {
+        //            p = BuildSelector(item.Name, ValidYears);
+        //        }
+        //        else if (t.IsEnum) { p = BuildSelector(item.Name, Enum.GetValues(t)); }
+        //        else
+        //        {
+        //            p = new LabeledTextBox() { LabelContent = item.Name };     
+        //        }
+        //        RowDefinition r = new() { Height = GridLength.Auto };
+        //        testGrid.RowDefinitions.Add(r);
+        //        Grid.SetRow(p, testGrid.Children.Count);
+        //        testGrid.Children.Add(p);
+           
+        //    }
+        //}
+
+        private LabeledSelector BuildSelector(string name, IEnumerable list)
+        {
+            LabeledSelector s = new() { LabelContent = name };
+            s.SetItemSource(list);
+            return s;
         }
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
@@ -44,35 +89,34 @@ namespace Bongs_Vehicle_Viewer_V2
             double value = GetPriceValue();
             if (value == -1) { log += "Price Must Be A Positive Numeric Value"; }
 
-            //This currently works, but could be handled better.
+            //Below is still kinda dirty and smelly, some events might help
             if (log == "")  
             {
                 Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
                 AssignVehicleValues(v, value);
-                if (isEditing && Selected != null)
+                if (IsEditing && Selected != null)
                 {
                     v.ID = Selected.ID;
-                    if (!VehicleFactory.RemoveVehicle(Selected.ID))
+                    if (Storage.TryEditVehicle(v))
                     {
-                        DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE");
-                        return;
-                    }
-                }
-
-                if (VehicleFactory.AddVehicle(v))
-                {
-                    if (isEditing)
-                    {
-                        UnselectItem();
-                        tabControl.SelectedIndex = 1;
+                        UnselectItem(); // This kinda sucks, grid focus is a pain tho.
                         DisplaySystemMessage("Vehicle was edited succesfully");
+                        tabControl.SelectedIndex = 1;
                     }
-                    else { DisplaySystemMessage("Vehicle was added succesfully"); }
+                    else { DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE"); return; }
                 }
-                else { DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); }
+                else
+                {
+                    v.ID = VehicleFactory.GetVehicleUID();
+                    if (Storage.TryAddVehicle(v))
+                    {
+                        DisplaySystemMessage("Vehicle was added succesfully");
+                    }
+                    else { DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return; }
+                }
 
                 RefreshData();
-                VehicleFactory.SaveVehicleList();
+                Storage.SaveVehicleList();
             }
         }
 
@@ -123,13 +167,13 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Selected != null)
             {
-                if (VehicleFactory.RemoveVehicle(Selected.ID))
+                if (Storage.TryRemoveVehicle(Selected.ID))
                 {
                     UnselectItem();
                     UpdateStats();
                     RefreshDataGrid();
                     DisplaySystemMessage("Vehicle removed successfully");
-                    VehicleFactory.SaveVehicleList();
+                    Storage.SaveVehicleList();
                 }
             }
         }
@@ -138,11 +182,10 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Selected != null)
             {
-                isEditing = true;
+                IsEditing = true;
                 PopulateFields(Selected);
                 tabControl.SelectedIndex = 0;
                 submitBtn.Content = "Update";
-                typeSelector.IsEnabled = false;
             }
         }
 
@@ -158,8 +201,6 @@ namespace Bongs_Vehicle_Viewer_V2
 
         public void ResetFields()
         {
-            typeSelector.IsEnabled = true;
-
             typeSelector.ItemIndex = 0;
             yearSelector.ItemIndex = 0;
             stateSelector.ItemIndex = 0;
@@ -174,17 +215,17 @@ namespace Bongs_Vehicle_Viewer_V2
         public void UnselectItem()
         {
             Selected = null;
-            isEditing = false;
+            IsEditing = false;
             dataGrid.SelectedIndex = -1;
         }
         
         private void UpdateStats()
         {
-            totalTracker.Content = $"Total Vehicles: {VehicleFactory.VehicleCount}";
-            priceTracker.Content = $"Total Price: {VehicleFactory.TotalPrice:C}";
-            motorizedTracker.Content = $"Motorized Vehicles: {VehicleFactory.MotorizedVehicles}";
-            aerialTracker.Content = $"Aerial Vehicles: {VehicleFactory.AerialVehicles}";
-            aquaticTracker.Content = $"Aquatic Vehicles: {VehicleFactory.AquaticVehicles}";
+            totalTracker.Content = $"Total Vehicles: {Storage.Vehicles.Count}";
+            priceTracker.Content = $"Total Price: {Storage.TotalValue:C}";
+            motorizedTracker.Content = $"Motorized Vehicles: {Storage.MotorizedVehicles}";
+            aerialTracker.Content = $"Aerial Vehicles: {Storage.AerialVehicles}";
+            aquaticTracker.Content = $"Aquatic Vehicles: {Storage.AquaticVehicles}";
         }
 
         //These is semi-useless. Just helps reduce repeatition atm.
@@ -209,7 +250,6 @@ namespace Bongs_Vehicle_Viewer_V2
             return toReturn;
         }
 
-
         public void DisplaySystemMessage(string message)
         {
             statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
@@ -218,6 +258,6 @@ namespace Bongs_Vehicle_Viewer_V2
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetRegistration();
         private void OnRemoveBtnPress(object obj, RoutedEventArgs args) => RemoveVehicle();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
-        public void RefreshDataGrid() => dataGrid.ItemsSource = VehicleFactory.Vehicles.Values.ToList();
+        public void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
     }
 }
