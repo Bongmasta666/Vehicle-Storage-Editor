@@ -12,6 +12,9 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
         public int AerialVehicles { get; private set; } = 0;
         public int AquaticVehicles { get; private set; } = 0;
 
+        public event EventHandler? VehicleAdded;
+        public event EventHandler? VehicleRemoved;
+
         public VehicleStorage(string name) { Name = name; }
 
         public bool TryAddVehicle(Vehicle vehicle)
@@ -20,6 +23,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             if (Vehicles.TryAdd(vehicle.ID, vehicle))
             {
                 TallyVehicle(vehicle);
+                VehicleAdded?.Invoke(this, null); //For now, could pass some shit tho.
                 return true;
             }
             return false;
@@ -31,6 +35,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             {
                 TallyVehicle(v, true);
                 Vehicles.Remove(id);
+                VehicleRemoved?.Invoke(this, null); //For now, could pass some shit tho.
                 return true;
             }
             return false;

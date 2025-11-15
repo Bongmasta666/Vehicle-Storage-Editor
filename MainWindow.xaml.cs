@@ -43,6 +43,11 @@ namespace Bongs_Vehicle_Viewer_V2
 
             StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(SavePath);
             Storage = new VehicleStorage(data.Name);
+
+            //Testing New Message handling
+            Storage.VehicleAdded += (obj, args) => DisplaySystemMessage("Vehicle Added Successfully.");
+            Storage.VehicleRemoved += (obj, args) => DisplaySystemMessage("Vehicle Removed Successfully.");
+
             Storage.LoadFromData(data);
             RefreshData();
         }
@@ -79,8 +84,8 @@ namespace Bongs_Vehicle_Viewer_V2
             log += ValidateRequiredFields(VehicleFields);
             log += ValidateRequiredFields(ExtraFields);
 
-            if (log == "")  
-            {      
+            if (log == "")
+            {
                 Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
                 v.Year = ValidYears[yearSelector.ItemIndex];
 
@@ -101,11 +106,13 @@ namespace Bongs_Vehicle_Viewer_V2
                 else //MAYBE I SHOULD USE EVENTS! CAUSE ALL THIS UP AND DOWN SUCKS!
                 {
                     v.ID = VehicleFactory.GetVehicleUID();
-                    if (Storage.TryAddVehicle(v))
+      
+                    if (!Storage.TryAddVehicle(v))
                     {
-                        DisplaySystemMessage("Vehicle was added succesfully");
+                        DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return;
+
                     }
-                    else { DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return; }
+
                 }
 
                 RefreshData();
@@ -182,7 +189,7 @@ namespace Bongs_Vehicle_Viewer_V2
                 UnselectItem();
                 UpdateStats();
                 RefreshDataGrid();
-                DisplaySystemMessage("Vehicle removed successfully");
+
 
                 SaveToJson();
             }
@@ -278,12 +285,15 @@ namespace Bongs_Vehicle_Viewer_V2
         //Kind rough but should handle everything atm. Being able to pass the numeric value would be optimal.
         private static bool ValidateTextBox(LabeledTextBox textBox)
         {
-            if (textBox.IsNullOrEmpty(true)) return false;
-            if (textBox.IsNumericField && double.TryParse(textBox.TextContent, out double value))
+            if (textBox.IsNullOrEmpty(true)) { return false; }
+            if (textBox.IsNumericField)
             {
-                if (value < 0) { textBox.HighLight(); return false; }
+                if (double.TryParse(textBox.TextContent, out double value))
+                {
+                    if (value < 0) { textBox.HighLight(); return false; }
+                }
+                else { return false; }
             }
-            else { return false; }
             return true;
         }
 
