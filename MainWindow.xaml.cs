@@ -18,11 +18,12 @@ namespace Bongs_Vehicle_Viewer_V2
         public Vehicle? Selected { get; private set; } = null;
         public bool IsEditing { get; private set; } = false;
 
+        public Dictionary<string, LabeledControl> VehicleFields { get; private set; } = [];
+        public Dictionary<string, LabeledControl> ExtraFields { get; private set; } = [];
+
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 50, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
-        public Dictionary<string, LabeledControl> VehicleFields { get; private set; } = [];
-        public Dictionary<string, LabeledControl> ExtraFields { get; private set; } = [];
         public MainWindow()
         {
             InitializeComponent();
@@ -46,12 +47,8 @@ namespace Bongs_Vehicle_Viewer_V2
             RefreshData();
         }
 
-        //Build out properties programmatically. WIP
-        //Certain props will always be available, these should be pre built.
-        //Then build extended props followed by concreate props.
-        //This will make a dynamic form easier but we will have to do something about validating dynamic props. 
-        private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
-
+        //Still W.I.P. Currently as vehicles are submitted control elements reset and make things jank.
+        //Not setting typeSelector to a default will probably stop this
         private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
         private void RebuildProperties()
         {
@@ -77,16 +74,11 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        private LabeledSelector BuildSelector(string name, IEnumerable list)
-        {
-            LabeledSelector s = new() { LabelContent = name };
-            s.SetItemSource(list);
-            return s;
-        }
-
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
         {
-            string log = ValidateMainFields();
+            string log = ValidateRequiredFields();
+            //Dont Forget about numeric checks before you proceed.
+
             if (log == "")  
             {      
                 Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
@@ -94,8 +86,6 @@ namespace Bongs_Vehicle_Viewer_V2
 
                 AssignVehicleValues(v, VehicleFields);
                 AssignVehicleValues(v, ExtraFields);
-
-                //Dont Forget about numeric checks before you submit this.
 
                 if (IsEditing && Selected != null)
                 {
@@ -123,7 +113,7 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        private string ValidateMainFields()
+        private string ValidateRequiredFields()
         {
             string log = "";
             foreach (var item in VehicleFields)
@@ -168,14 +158,16 @@ namespace Bongs_Vehicle_Viewer_V2
         //Kinda Temporary untill statistics tracking is better.
         private void RefreshData()
         {
-            ResetFields();
+            ResetFields(VehicleFields);
+            ResetFields(ExtraFields);
             RefreshDataGrid();
             UpdateStats();
         }
 
         public void ResetRegistration()
         {
-            ResetFields();
+            ResetFields(VehicleFields);
+            ResetFields(ExtraFields);
             UnselectItem();
         }
 
@@ -219,32 +211,41 @@ namespace Bongs_Vehicle_Viewer_V2
             if (Selected != null)
             {
                 IsEditing = true;
-                PopulateFields(Selected);
+                PopulateAllFields(Selected);
                 tabControl.SelectedIndex = 0;
                 submitBtn.Content = "Update";
             }
         }
 
-        public void PopulateFields(Vehicle v)
+        private void PopulateAllFields(Vehicle vehicle)
         {
-            typeSelector.ItemIndex = classNames.IndexOf(v.Class);
-            yearSelector.ItemIndex = ValidYears.IndexOf(v.Year);
-            makeTextBox.TextContent = v.Make;
-            modelTextBox.TextContent = v.Model;
-            priceTextBox.TextContent = v.Price.ToString();
-            stateSelector.ItemIndex = (int)v.Condition;
+            typeSelector.ItemIndex = classNames.IndexOf(vehicle.Class);
+            yearSelector.ItemIndex = ValidYears.IndexOf(vehicle.Year);
+            PopulateFromDict(vehicle, VehicleFields);
+            PopulateFromDict(vehicle, ExtraFields);
         }
 
-        public void ResetFields()
+        public static void PopulateFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
         {
-            typeSelector.ItemIndex = 0;
+            foreach (var item in fieldDict)
+            {
+                //Some Null Checking Here Would Be Good..
+                var value = v.GetType().GetProperty(item.Key).GetValue(v);
+                if (item.Value is LabeledSelector ls) { ls.ItemIndex = (int)value; }
+                else if (item.Value is LabeledTextBox lt) { lt.TextContent = value.ToString(); }
+            }
+        }
+
+        //Removing the local variables will allow this to be static
+        public void ResetFields(Dictionary<string, LabeledControl> fieldDict)
+        {
+            foreach (var item in fieldDict.Values)
+            {
+                if (item is LabeledSelector ls) { ls.ItemIndex = 0; }
+                else if (item is LabeledTextBox lt) { lt.TextContent = ""; } //Gotta reset BG too
+            }
+
             yearSelector.ItemIndex = 0;
-            stateSelector.ItemIndex = 0;
-
-            makeTextBox.TextContent = string.Empty;
-            modelTextBox.TextContent = string.Empty;
-            priceTextBox.TextContent = string.Empty;
-
             submitBtn.Content = "Submit";
         }
 
@@ -264,7 +265,23 @@ namespace Bongs_Vehicle_Viewer_V2
             aquaticTracker.Content = $"Aquatic Vehicles: {Storage.AquaticVehicles}";
         }
 
-        private static bool ValidateTextBox(LabeledTextBox textBox) => !textBox.IsNullOrEmpty(true); 
+        public void DisplaySystemMessage(string message)
+        {
+            statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
+        }
+
+        private void SaveToJson()
+        {
+            StorageData data = new("Test Storage", [.. Storage.Vehicles.Values]);
+            MyFriendJson.SaveThisPlease(data, SavePath);
+        }
+
+        private static LabeledSelector BuildSelector(string name, IEnumerable list)
+        {
+            LabeledSelector s = new() { LabelContent = name };
+            s.SetItemSource(list);
+            return s;
+        }
 
         private static double TryGetDouble(LabeledTextBox tbox)
         {
@@ -278,20 +295,13 @@ namespace Bongs_Vehicle_Viewer_V2
             return toReturn;
         }
 
-        public void DisplaySystemMessage(string message)
-        {
-            statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
-        }
 
-        private void SaveToJson()
-        {
-            StorageData data = new("Test Storage", [.. Storage.Vehicles.Values]);
-            MyFriendJson.SaveThisPlease(data, SavePath);
-        }
+        private static bool ValidateTextBox(LabeledTextBox textBox) => !textBox.IsNullOrEmpty(true);
 
+        private void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
+        private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetRegistration();
         private void OnRemoveBtnPress(object obj, RoutedEventArgs args) => RemoveVehicle();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
-        public void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
     }
 }
