@@ -1,17 +1,4 @@
-﻿using System.IO;
-using System.Text.Json;
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections;
-using System.Diagnostics;
-using System.Text.Json.Serialization;
-using System.Net.Http.Json;
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized;
+﻿using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 {
@@ -62,6 +49,20 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return false;
         }
 
+        public void LoadFromData(StorageData data)
+        {
+            foreach (Vehicle v in data.List)
+            {
+                Vehicles.Add(v.ID, v);
+                TallyVehicle(v);
+            }
+
+            //Maybe Abstract
+            int VehicleUid = Vehicles.OrderBy(v => v.Value.ID).Last().Value.ID + 1;
+            VehicleFactory.SetVehicleUID(VehicleUid);
+        }
+
+
         //String literals suck. Maybe Just compare type with typeof or make enum.
         private void TallyVehicle(Vehicle vehicle, bool remove = false)
         {
@@ -83,81 +84,5 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             foreach (Vehicle v in Vehicles.Values) { total += v.Price; }
             return total;
         }
-
-
-
-        //Probably abstract these, but leave for now.
-        public void SaveVehicleList()
-        {
-            StorageData data = new(Name, [.. Vehicles.Values]);
-            string json = JsonSerializer.Serialize(data);
-            File.WriteAllText("vehicle_data.json", json);
-        }
-
-        public void LoadAllVehicles()
-        {
-            var typeDict = VehicleFactory.TypeDictonary;
-            var contents = File.ReadAllText("vehicle_data.json");
-            var doc = JsonDocument.Parse(contents);
-            var name = doc.RootElement.GetProperty("Name").ToString();
-            var list = doc.RootElement.GetProperty("List").EnumerateArray();
-
-            foreach (var item in list)
-            {
-                if (item.TryGetProperty("Class", out JsonElement prop))
-                {
-                    if (typeDict.TryGetValue(prop.ToString(), out Type t))
-                    {
-                        Vehicle v = (Vehicle)JsonSerializer.Deserialize(item, t);
-                        Vehicles.Add(v.ID, v);
-                        TallyVehicle(v);
-                    }
-                }
-            }
-            int VehicleUid = Vehicles.OrderBy(v => v.Value.ID).Last().Value.ID + 1;
-            VehicleFactory.SetVehicleUID(VehicleUid);
-        }
-
-        public class StorageData
-        {
-            public string Name { get; set; }
-            public List<Vehicle> List { get; set; }
-
-            public StorageData(string name, List<Vehicle> list)
-            {
-                Name = name;
-                List = list;
-            }
-        }
-
-        //Old Save & Load
-
-        //public void SaveAllVehicles()
-        //{
-        //    string json = JsonSerializer.Serialize(Vehicles.Values);
-        //    File.WriteAllText("vehicles.json", json);
-        //}
-
-        //public void LoadAllVehicles()
-        //{
-        //    var typeDict = VehicleFactory.TypeDictonary;
-        //    var contents = File.ReadAllText("vehicles.json");
-        //    var vehicles = JsonSerializer.Deserialize<List<JsonElement>>(contents);
-        //    foreach (var item in vehicles)
-        //    {
-        //        if (item.TryGetProperty("Class", out JsonElement prop))
-        //        {
-        //            if (typeDict.TryGetValue(prop.ToString(), out Type t))
-        //            {
-        //                Vehicle v = (Vehicle)JsonSerializer.Deserialize(item, t);
-        //                Vehicles.Add(v.ID, v);
-        //                TallyVehicle(v);
-        //            }
-        //        }
-        //    }
-        //    int VehicleUid = Vehicles.OrderBy(v => v.Value.ID).Last().Value.ID + 1;
-        //    VehicleFactory.SetVehicleUID(VehicleUid);
-        //}
-
     }
 }

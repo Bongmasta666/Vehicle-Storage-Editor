@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Collections;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using Bongs_Vehicle_Viewer_V2.Resources;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
@@ -12,6 +13,7 @@ namespace Bongs_Vehicle_Viewer_V2
 {
     public partial class MainWindow : Window
     {
+        public string SavePath { get; private set; } = "vehicle_nsdata.json";
         public VehicleStorage Storage { get; private set; }
         public Vehicle? Selected { get; private set; } = null;
         public bool IsEditing { get; private set; } = false;
@@ -24,8 +26,6 @@ namespace Bongs_Vehicle_Viewer_V2
         public MainWindow()
         {
             InitializeComponent();
-
-            Storage = new VehicleStorage("Test");
 
             VehicleFields.Add("Make", makeTextBox);
             VehicleFields.Add("Model", modelTextBox);
@@ -40,7 +40,9 @@ namespace Bongs_Vehicle_Viewer_V2
             timer.Tick += (obj, args) => { timeLabel.Content = DateTime.Now.ToLongTimeString(); };
             timer.Start();
 
-            Storage.LoadAllVehicles();
+            StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(SavePath);
+            Storage = new VehicleStorage(data.Name);
+            Storage.LoadFromData(data);
             RefreshData();
         }
 
@@ -48,10 +50,10 @@ namespace Bongs_Vehicle_Viewer_V2
         //Certain props will always be available, these should be pre built.
         //Then build extended props followed by concreate props.
         //This will make a dynamic form easier but we will have to do something about validating dynamic props. 
-        private void OnTypeChange(object obj, SelectionChangedEventArgs args) => TestFoo();
+        private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
 
         private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
-        private void TestFoo()
+        private void RebuildProperties()
         {
             ExtraFields = [];
             testGrid.Children.Clear();
@@ -93,6 +95,8 @@ namespace Bongs_Vehicle_Viewer_V2
                 AssignVehicleValues(v, VehicleFields);
                 AssignVehicleValues(v, ExtraFields);
 
+                //Dont Forget about numeric checks before you submit this.
+
                 if (IsEditing && Selected != null)
                 {
                     v.ID = Selected.ID;
@@ -104,7 +108,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     }
                     else { DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE"); return; }
                 }
-                else
+                else //MAYBE I SHOULD USE EVENTS! CAUSE ALL THIS UP AND DOWN SUCKS!
                 {
                     v.ID = VehicleFactory.GetVehicleUID();
                     if (Storage.TryAddVehicle(v))
@@ -115,7 +119,7 @@ namespace Bongs_Vehicle_Viewer_V2
                 }
 
                 RefreshData();
-                Storage.SaveVehicleList();
+                SaveToJson();
             }
         }
 
@@ -157,8 +161,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     else { prop.SetValue(v, ltbox.TextContent); }
                 }
 
-                else { DisplaySystemMessage("ERROR!!! ERROR!!  MISSED ASSIGNING FIELD"); }
-               
+                else { DisplaySystemMessage("ERROR!!! ERROR!!  MISSED ASSIGNING FIELD"); }              
             }
         }
 
@@ -205,7 +208,8 @@ namespace Bongs_Vehicle_Viewer_V2
                     UpdateStats();
                     RefreshDataGrid();
                     DisplaySystemMessage("Vehicle removed successfully");
-                    Storage.SaveVehicleList();
+
+                    SaveToJson();
                 }
             }
         }
@@ -277,6 +281,12 @@ namespace Bongs_Vehicle_Viewer_V2
         public void DisplaySystemMessage(string message)
         {
             statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
+        }
+
+        private void SaveToJson()
+        {
+            StorageData data = new("Test Storage", [.. Storage.Vehicles.Values]);
+            MyFriendJson.SaveThisPlease(data, SavePath);
         }
 
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetRegistration();
