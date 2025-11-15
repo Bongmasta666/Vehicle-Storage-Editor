@@ -47,8 +47,7 @@ namespace Bongs_Vehicle_Viewer_V2
             RefreshData();
         }
 
-        //Still W.I.P. Currently as vehicles are submitted control elements reset and make things jank.
-        //Not setting typeSelector to a default will probably stop this
+        //Still W.I.P. .. Are things still jank?
         private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
         private void RebuildProperties()
         {
@@ -113,6 +112,7 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
+        //Could maybe do numeric validation here too..
         private string ValidateRequiredFields()
         {
             string log = "";
@@ -128,8 +128,19 @@ namespace Bongs_Vehicle_Viewer_V2
             } return log;
         }
 
+        private static double TryGetDouble(LabeledTextBox tbox)
+        {
+            double toReturn = -1;
+            if (double.TryParse(tbox.TextContent, out double value))
+            {
+                if (value >= 0.0) { toReturn = value; }
+                else { tbox.HighLight(); }
+            }
+            else { tbox.HighLight(); }
+            return toReturn;
+        }
+
         //Will probably need some work but should work for now.
-        //Maybe todo: handle years seperatly.
         private void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
         {
             foreach (var item in fieldDict)
@@ -149,29 +160,30 @@ namespace Bongs_Vehicle_Viewer_V2
                         if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(v, value); }
                     }
                     else { prop.SetValue(v, ltbox.TextContent); }
-                }
-
-                else { DisplaySystemMessage("ERROR!!! ERROR!!  MISSED ASSIGNING FIELD"); }              
+                }           
             }
         }
 
-        //Kinda Temporary untill statistics tracking is better.
+        //Kinda Temporary untill statistics tracking is better. .. Now more stinky and smelly than ever!!
         private void RefreshData()
         {
-            ResetFields(VehicleFields);
-            ResetFields(ExtraFields);
+            yearSelector.ItemIndex = 0;
+            submitBtn.Content = "Submit";
+            ResetFieldValues(VehicleFields);
+            ResetFieldValues(ExtraFields);
             RefreshDataGrid();
             UpdateStats();
         }
 
         public void ResetRegistration()
         {
-            ResetFields(VehicleFields);
-            ResetFields(ExtraFields);
+            yearSelector.ItemIndex = 0;
+            submitBtn.Content = "Submit";
+            ResetFieldValues(VehicleFields);
+            ResetFieldValues(ExtraFields);
             UnselectItem();
         }
 
-        //The below three functions somewhat work for now but need improving.
         private void OnVehicleSelected(object obj, RoutedEventArgs args)
         {
             if (dataGrid.SelectedIndex != -1)
@@ -192,17 +204,14 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void RemoveVehicle()
         {
-            if (Selected != null)
+            if (Selected != null && Storage.TryRemoveVehicle(Selected.ID))
             {
-                if (Storage.TryRemoveVehicle(Selected.ID))
-                {
-                    UnselectItem();
-                    UpdateStats();
-                    RefreshDataGrid();
-                    DisplaySystemMessage("Vehicle removed successfully");
+                UnselectItem();
+                UpdateStats();
+                RefreshDataGrid();
+                DisplaySystemMessage("Vehicle removed successfully");
 
-                    SaveToJson();
-                }
+                SaveToJson();
             }
         }
 
@@ -223,30 +232,6 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.ItemIndex = ValidYears.IndexOf(vehicle.Year);
             PopulateFromDict(vehicle, VehicleFields);
             PopulateFromDict(vehicle, ExtraFields);
-        }
-
-        public static void PopulateFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
-        {
-            foreach (var item in fieldDict)
-            {
-                //Some Null Checking Here Would Be Good..
-                var value = v.GetType().GetProperty(item.Key).GetValue(v);
-                if (item.Value is LabeledSelector ls) { ls.ItemIndex = (int)value; }
-                else if (item.Value is LabeledTextBox lt) { lt.TextContent = value.ToString(); }
-            }
-        }
-
-        //Removing the local variables will allow this to be static
-        public void ResetFields(Dictionary<string, LabeledControl> fieldDict)
-        {
-            foreach (var item in fieldDict.Values)
-            {
-                if (item is LabeledSelector ls) { ls.ItemIndex = 0; }
-                else if (item is LabeledTextBox lt) { lt.TextContent = ""; } //Gotta reset BG too
-            }
-
-            yearSelector.ItemIndex = 0;
-            submitBtn.Content = "Submit";
         }
 
         public void UnselectItem()
@@ -276,25 +261,32 @@ namespace Bongs_Vehicle_Viewer_V2
             MyFriendJson.SaveThisPlease(data, SavePath);
         }
 
+        public static void PopulateFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
+        {
+            foreach (var item in fieldDict)
+            {
+                //Some Null Checking Here Would Be Good..
+                var value = v.GetType().GetProperty(item.Key).GetValue(v);
+                if (item.Value is LabeledSelector ls) { ls.ItemIndex = (int)value; }
+                else if (item.Value is LabeledTextBox lt) { lt.TextContent = value.ToString(); }
+            }
+        }
+
+        private static void ResetFieldValues(Dictionary<string, LabeledControl> fieldDict)
+        {
+            foreach (var item in fieldDict.Values)
+            {
+                if (item is LabeledSelector ls) { ls.ItemIndex = 0; }
+                else if (item is LabeledTextBox lt) { lt.TextContent = ""; } //Gotta reset BG too
+            }
+        }
+
         private static LabeledSelector BuildSelector(string name, IEnumerable list)
         {
             LabeledSelector s = new() { LabelContent = name };
             s.SetItemSource(list);
             return s;
         }
-
-        private static double TryGetDouble(LabeledTextBox tbox)
-        {
-            double toReturn = -1;
-            if (double.TryParse(tbox.TextContent, out double value))
-            {
-                if (value >= 0.0) { toReturn = value; }
-                else { tbox.HighLight(); }
-            }
-            else { tbox.HighLight(); }
-            return toReturn;
-        }
-
 
         private static bool ValidateTextBox(LabeledTextBox textBox) => !textBox.IsNullOrEmpty(true);
 
