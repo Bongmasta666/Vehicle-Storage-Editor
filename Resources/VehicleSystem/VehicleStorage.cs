@@ -14,9 +14,11 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         public event EventHandler? VehicleAdded;
         public event EventHandler? VehicleRemoved;
+        public event EventHandler? VehicleUpdated;
 
         public VehicleStorage(string name) { Name = name; }
 
+        //with events its kinda possible to makes these void and not worry bout returns.. mhmm...
         public bool TryAddVehicle(Vehicle vehicle)
         {
             if (vehicle.ID == -1) { return false; } 
@@ -35,7 +37,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             {
                 TallyVehicle(v, true);
                 Vehicles.Remove(id);
-                VehicleRemoved?.Invoke(this, null); //For now, could pass some shit tho.
+                VehicleRemoved?.Invoke(this, null); //For now as well, could also pass some shit here too.
                 return true;
             }
             return false;
@@ -44,9 +46,10 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
         public bool TryEditVehicle(Vehicle vehicle)
         {
             if (TryRemoveVehicle(vehicle.ID))
-            {
+            {                                   //Both theses will invoke events, could be for the best. 
                 if (TryAddVehicle(vehicle))
                 {
+                    VehicleUpdated?.Invoke(this, null); //Okay, make a custom handler at this point!!
                     return true;
                 }
                 return false;

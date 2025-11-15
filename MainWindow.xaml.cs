@@ -27,6 +27,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public MainWindow()
         {
             InitializeComponent();
+            StartSystemClock(timeLabel);
 
             VehicleFields.Add("Make", makeTextBox);
             VehicleFields.Add("Model", modelTextBox);
@@ -37,22 +38,21 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.SetItemSource(ValidYears);
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
 
-            DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(100) };
-            timer.Tick += (obj, args) => { timeLabel.Content = DateTime.Now.ToLongTimeString(); };
-            timer.Start();
-
             StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(SavePath);
             Storage = new VehicleStorage(data.Name);
-
-            //Testing New Message handling
-            Storage.VehicleAdded += (obj, args) => DisplaySystemMessage("Vehicle Added Successfully.");
-            Storage.VehicleRemoved += (obj, args) => DisplaySystemMessage("Vehicle Removed Successfully.");
-
             Storage.LoadFromData(data);
-            RefreshData();
+
+            //Testing New Message handling, seperating status bar into a user or extended control could make this nice.
+            //Since Addding and removing is the how editing is handled, this could be bad or good.. Plans are to save to a log.txt file anyways
+            Storage.VehicleAdded += OnVehicleRemoved;
+            Storage.VehicleRemoved += OnVehicleRemoved;
+            Storage.VehicleUpdated += OnVehicleUpdated;
+
+            RefreshDataGrid();
+            UpdateStats();
         }
 
-        //Still W.I.P. .. Are things still jank?
+        //Still W.I.P. .. Are things still jank? .. possible to abstract this all out
         private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
         private void RebuildProperties()
         {
@@ -95,73 +95,14 @@ namespace Bongs_Vehicle_Viewer_V2
                 if (IsEditing && Selected != null)
                 {
                     v.ID = Selected.ID;
-                    if (Storage.TryEditVehicle(v))
-                    {
-                        UnselectItem(); // This kinda sucks, grid focus is a pain tho.
-                        DisplaySystemMessage("Vehicle was edited succesfully");
-                        tabControl.SelectedIndex = 1;
-                    }
-                    else { DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE"); return; }
+                    if (!Storage.TryEditVehicle(v)) { DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE"); return; }
                 }
-                else //MAYBE I SHOULD USE EVENTS! CAUSE ALL THIS UP AND DOWN SUCKS!
+                else
                 {
                     v.ID = VehicleFactory.GetVehicleUID();
-      
-                    if (!Storage.TryAddVehicle(v))
-                    {
-                        DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return;
-
-                    }
-
+                    if (!Storage.TryAddVehicle(v)) { DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return; }
                 }
-
-                RefreshData();
-                SaveToJson();
             }
-        }
-
-        //Will probably need some work but should work for now.
-        private static void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
-        {
-            foreach (var item in fieldDict)
-            {
-                PropertyInfo prop = v.GetType().GetProperty(item.Key);
-                Type type = prop.PropertyType;
-                if (item.Value is LabeledSelector lselect)
-                {
-                    prop.SetValue(v, lselect.ItemIndex);
-                }
-
-                else if (item.Value is LabeledTextBox ltbox) 
-                {
-                    if (type == typeof(int) || type == typeof(double))
-                    {
-                        //Kinda rough because we parse in validating ..  it works for now tho
-                        if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(v, value); }
-                    }
-                    else { prop.SetValue(v, ltbox.TextContent); }
-                }           
-            }
-        }
-
-        //Kinda Temporary untill statistics tracking is better. .. Now more stinky and smelly than ever!!
-        private void RefreshData()
-        {
-            yearSelector.ItemIndex = 0;
-            submitBtn.Content = "Submit";
-            ResetFieldValues(VehicleFields);
-            ResetFieldValues(ExtraFields);
-            RefreshDataGrid();
-            UpdateStats();
-        }
-
-        public void ResetRegistration()
-        {
-            yearSelector.ItemIndex = 0;
-            submitBtn.Content = "Submit";
-            ResetFieldValues(VehicleFields);
-            ResetFieldValues(ExtraFields);
-            UnselectItem();
         }
 
         private void OnVehicleSelected(object obj, RoutedEventArgs args)
@@ -182,17 +123,41 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        private void RemoveVehicle()
+        private void OnRemoveBtnPress(object obj, RoutedEventArgs args)
         {
-            if (Selected != null && Storage.TryRemoveVehicle(Selected.ID))
+            if (Selected != null)
             {
-                UnselectItem();
-                UpdateStats();
-                RefreshDataGrid();
-
-
-                SaveToJson();
+                if (!Storage.TryRemoveVehicle(Selected.ID)) { DisplaySystemMessage("FAILED TO REMOVE VEHICLE"); }
             }
+        }
+
+        private void OnVehicleAdded(object? obj, EventArgs args)
+        {
+            DisplaySystemMessage("Vehicle Added Succesfully");
+            SaveAndRefresh();
+        }
+
+        private void OnVehicleUpdated(object? obj, EventArgs args)
+        {
+            DisplaySystemMessage("Vehicle Updated Successfully");
+            SaveAndRefresh();
+            UnselectItem();
+
+            tabControl.SelectedIndex = 1;
+        }
+
+        private void OnVehicleRemoved(object? obj, EventArgs args)
+        {
+            DisplaySystemMessage("Vehicle Removed Successfully");
+            SaveAndRefresh();
+            UnselectItem();
+        }
+
+        private void SaveAndRefresh()
+        {
+            SaveToJson();
+            RefreshDataGrid();
+            UpdateStats();
         }
 
         private void OnEditBtnPress(object obj, RoutedEventArgs ars)
@@ -212,6 +177,15 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.ItemIndex = ValidYears.IndexOf(vehicle.Year);
             PopulateFromDict(vehicle, VehicleFields);
             PopulateFromDict(vehicle, ExtraFields);
+        }
+
+        public void ResetRegistration()
+        {
+            yearSelector.ItemIndex = 0;
+            submitBtn.Content = "Submit";
+            ResetFieldValues(VehicleFields);
+            ResetFieldValues(ExtraFields);
+            UnselectItem();
         }
 
         public void UnselectItem()
@@ -297,10 +271,38 @@ namespace Bongs_Vehicle_Viewer_V2
             return true;
         }
 
+        //Will probably need some work but should work for now.
+        private static void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
+        {
+            foreach (var item in fieldDict)
+            {
+                PropertyInfo prop = v.GetType().GetProperty(item.Key);
+                Type type = prop.PropertyType;
+                if (item.Value is LabeledSelector lselect) { prop.SetValue(v, lselect.ItemIndex); }
+                else if (item.Value is LabeledTextBox ltbox)
+                {
+                    if (type == typeof(int) || type == typeof(double))
+                    {
+                        //Kinda rough because we parse in validating ..  it works for now tho
+                        if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(v, value); }
+                    }
+                    else { prop.SetValue(v, ltbox.TextContent); }
+                }
+            }
+        }
+
+        //Will probably be seperated onto a statusbar object. Label type argument is a lil rigged but meh.
+        //Added note: This runs harsh in debug mode but is fine otherwise.
+        public static void StartSystemClock(Label printTo)
+        {
+            DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(100) };
+            timer.Tick += (obj, args) => { printTo.Content = DateTime.Now.ToLongTimeString(); };
+            timer.Start();
+        }
+
         private void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetRegistration();
-        private void OnRemoveBtnPress(object obj, RoutedEventArgs args) => RemoveVehicle();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
     }
 }
