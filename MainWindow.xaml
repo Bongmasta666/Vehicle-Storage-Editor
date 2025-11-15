@@ -44,7 +44,7 @@
                         <customcontrols:LabeledSelector x:Name="yearSelector" Grid.Row="1" LabelContent="Year"/>
                         <customcontrols:LabeledTextBox x:Name="makeTextBox" Grid.Row="2" LabelContent="Make"/>
                         <customcontrols:LabeledTextBox x:Name="modelTextBox" Grid.Row="3" LabelContent="Model"/>
-                        <customcontrols:LabeledTextBox x:Name="priceTextBox" Grid.Row="4" LabelContent="Price"/>
+                        <customcontrols:LabeledTextBox x:Name="priceTextBox" Grid.Row="4" LabelContent="Price" IsNumericField="True"/>
                         <customcontrols:LabeledSelector x:Name="stateSelector" Grid.Row="5" LabelContent="Condition"/>
                         <Grid x:Name="testGrid" Grid.Row="6" Margin="0,2,0,0"></Grid>
                     </Grid>

@@ -23,6 +23,15 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
         public static readonly DependencyProperty TextContentProperty =
             DependencyProperty.Register("TextContent", typeof(string), typeof(LabeledTextBox), new PropertyMetadata(""));
 
+        public bool IsNumericField
+        {
+            get { return (bool)GetValue(IsNumericFieldProperty); }
+            set { SetValue(IsNumericFieldProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsNumericFieldProperty =
+            DependencyProperty.Register("IsNumericField", typeof(bool), typeof(LabeledTextBox), new PropertyMetadata(false));
+
         public Brush TBoxBgNormal { get; protected set; } = Brushes.White;
         public Brush TBoxBgHighlight { get; protected set; } = Brushes.MistyRose;
 

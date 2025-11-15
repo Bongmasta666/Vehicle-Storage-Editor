@@ -75,8 +75,9 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
         {
-            string log = ValidateRequiredFields();
-            //Dont Forget about numeric checks before you proceed.
+            string log = "";
+            log += ValidateRequiredFields(VehicleFields);
+            log += ValidateRequiredFields(ExtraFields);
 
             if (log == "")  
             {      
@@ -112,36 +113,8 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        //Could maybe do numeric validation here too..
-        private string ValidateRequiredFields()
-        {
-            string log = "";
-            foreach (var item in VehicleFields)
-            {
-                if (item.Value is LabeledTextBox)
-                {
-                   if (!ValidateTextBox(item.Value as LabeledTextBox))
-                   {
-                        log += $"{item.Key} Is Empty Or Invalid\n";
-                   }
-                }
-            } return log;
-        }
-
-        private static double TryGetDouble(LabeledTextBox tbox)
-        {
-            double toReturn = -1;
-            if (double.TryParse(tbox.TextContent, out double value))
-            {
-                if (value >= 0.0) { toReturn = value; }
-                else { tbox.HighLight(); }
-            }
-            else { tbox.HighLight(); }
-            return toReturn;
-        }
-
         //Will probably need some work but should work for now.
-        private void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
+        private static void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
         {
             foreach (var item in fieldDict)
             {
@@ -156,7 +129,7 @@ namespace Bongs_Vehicle_Viewer_V2
                 {
                     if (type == typeof(int) || type == typeof(double))
                     {
-                        //Kinda rough, but for now. Probably Temporary.
+                        //Kinda rough because we parse in validating ..  it works for now tho
                         if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(v, value); }
                     }
                     else { prop.SetValue(v, ltbox.TextContent); }
@@ -272,12 +245,26 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
+        //Numeric validation is done in ValidateTextBox for now but we need to get the numeric value.
+        private static string ValidateRequiredFields(Dictionary<string, LabeledControl> fieldDict)
+        {
+            string log = "";
+            foreach (var item in fieldDict)
+            {
+                if (item.Value is LabeledTextBox lt)
+                {
+                    if (!ValidateTextBox(lt)) { log += $"{item.Key} Is Empty Or Invalid\n"; }
+                }
+            }
+            return log;
+        }
+
         private static void ResetFieldValues(Dictionary<string, LabeledControl> fieldDict)
         {
             foreach (var item in fieldDict.Values)
             {
                 if (item is LabeledSelector ls) { ls.ItemIndex = 0; }
-                else if (item is LabeledTextBox lt) { lt.TextContent = ""; } //Gotta reset BG too
+                else if (item is LabeledTextBox lt) { lt.Reset(); }
             }
         }
 
@@ -288,7 +275,17 @@ namespace Bongs_Vehicle_Viewer_V2
             return s;
         }
 
-        private static bool ValidateTextBox(LabeledTextBox textBox) => !textBox.IsNullOrEmpty(true);
+        //Kind rough but should handle everything atm. Being able to pass the numeric value would be optimal.
+        private static bool ValidateTextBox(LabeledTextBox textBox)
+        {
+            if (textBox.IsNullOrEmpty(true)) return false;
+            if (textBox.IsNumericField && double.TryParse(textBox.TextContent, out double value))
+            {
+                if (value < 0) { textBox.HighLight(); return false; }
+            }
+            else { return false; }
+            return true;
+        }
 
         private void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
