@@ -11,6 +11,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 using System.Net.Http.Json;
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 {

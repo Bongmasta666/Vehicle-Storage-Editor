@@ -10,7 +10,6 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
     public abstract class AerialVehicle : Vehicle
     {
         public double MaxAltitude { get; set; }
-        public FuelType FuelType { get; set; }
 
         public AerialVehicle() : base() { }
     }

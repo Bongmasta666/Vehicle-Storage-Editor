@@ -1,10 +1,11 @@
-﻿using System.Collections;
-using System.Windows;
+﻿using System.Windows;
+using System.Reflection;
+using System.Collections;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
-using System.Windows.Controls;
 using System.Diagnostics;
 
 namespace Bongs_Vehicle_Viewer_V2
@@ -18,11 +19,18 @@ namespace Bongs_Vehicle_Viewer_V2
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 50, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
+        public Dictionary<string, LabeledControl> VehicleFields { get; private set; } = [];
+        public Dictionary<string, LabeledControl> ExtraFields { get; private set; } = [];
         public MainWindow()
         {
             InitializeComponent();
 
             Storage = new VehicleStorage("Test");
+
+            VehicleFields.Add("Make", makeTextBox);
+            VehicleFields.Add("Model", modelTextBox);
+            VehicleFields.Add("Price", priceTextBox);
+            VehicleFields.Add("Condition", stateSelector);
 
             typeSelector.SetItemSource(classNames);
             yearSelector.SetItemSource(ValidYears);
@@ -40,36 +48,32 @@ namespace Bongs_Vehicle_Viewer_V2
         //Certain props will always be available, these should be pre built.
         //Then build extended props followed by concreate props.
         //This will make a dynamic form easier but we will have to do something about validating dynamic props. 
-        //private void TestFoo(object obj, SelectionChangedEventArgs args)
-        //{
-        //    testGrid.Children.Clear();
-        //    Type type = VehicleFactory.TypeDictonary[typeSelector.ItemName];
-        //    var props = type.GetProperties();
-        //    foreach (var item in props)
-        //    {
-        //        LabeledControl? p;
-        //        Type t = item.PropertyType;
-        //        if (item.Name == "ID") { continue; }
-        //        else if (item.Name == "Class")
-        //        {
-        //            p = BuildSelector(item.Name, classNames);
-        //        }
-        //        else if (item.Name == "Year")
-        //        {
-        //            p = BuildSelector(item.Name, ValidYears);
-        //        }
-        //        else if (t.IsEnum) { p = BuildSelector(item.Name, Enum.GetValues(t)); }
-        //        else
-        //        {
-        //            p = new LabeledTextBox() { LabelContent = item.Name };     
-        //        }
-        //        RowDefinition r = new() { Height = GridLength.Auto };
-        //        testGrid.RowDefinitions.Add(r);
-        //        Grid.SetRow(p, testGrid.Children.Count);
-        //        testGrid.Children.Add(p);
-           
-        //    }
-        //}
+        private void OnTypeChange(object obj, SelectionChangedEventArgs args) => TestFoo();
+
+        private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
+        private void TestFoo()
+        {
+            ExtraFields = [];
+            testGrid.Children.Clear();
+            Type type = VehicleFactory.TypeDictonary[typeSelector.ItemName];
+            PropertyInfo[] subprops = type.BaseType.GetProperties(PropertyFlags);
+            foreach (var item in subprops)
+            {
+                LabeledControl? p;
+                Type t = item.PropertyType;
+
+                if (item.Name == "ID") { continue; }
+                else if (t.IsEnum) { p = BuildSelector(item.Name, Enum.GetValues(t)); }
+                else { p = new LabeledTextBox() { LabelContent = item.Name }; }
+
+                ExtraFields.Add(item.Name, p);
+
+                RowDefinition r = new() { Height = GridLength.Auto };
+                testGrid.RowDefinitions.Add(r);
+                Grid.SetRow(p, testGrid.Children.Count);
+                testGrid.Children.Add(p);
+            }
+        }
 
         private LabeledSelector BuildSelector(string name, IEnumerable list)
         {
@@ -80,20 +84,15 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
         {
-            //This validation still sucks. W.I.P.
-            string log = "";
-            log += ValidateTextBox(makeTextBox);
-            log += ValidateTextBox(modelTextBox);
-            log += ValidateTextBox(priceTextBox);
-
-            double value = GetPriceValue();
-            if (value == -1) { log += "Price Must Be A Positive Numeric Value"; }
-
-            //Below is still kinda dirty and smelly, some events might help
+            string log = ValidateMainFields();
             if (log == "")  
-            {
+            {      
                 Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
-                AssignVehicleValues(v, value);
+                v.Year = ValidYears[yearSelector.ItemIndex];
+
+                AssignVehicleValues(v, VehicleFields);
+                AssignVehicleValues(v, ExtraFields);
+
                 if (IsEditing && Selected != null)
                 {
                     v.ID = Selected.ID;
@@ -120,14 +119,47 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        //Price is passed here to avoid another parse. Can this be better?
-        private void AssignVehicleValues(Vehicle v, double price)
+        private string ValidateMainFields()
         {
-            v.Year = ValidYears[yearSelector.ItemIndex];
-            v.Make = makeTextBox.TextContent;
-            v.Model = modelTextBox.TextContent;
-            v.Condition = (VehicleConditon)stateSelector.ItemIndex;
-            v.Price = price;
+            string log = "";
+            foreach (var item in VehicleFields)
+            {
+                if (item.Value is LabeledTextBox)
+                {
+                   if (!ValidateTextBox(item.Value as LabeledTextBox))
+                   {
+                        log += $"{item.Key} Is Empty Or Invalid\n";
+                   }
+                }
+            } return log;
+        }
+
+        //Will probably need some work but should work for now.
+        //Maybe todo: handle years seperatly.
+        private void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
+        {
+            foreach (var item in fieldDict)
+            {
+                PropertyInfo prop = v.GetType().GetProperty(item.Key);
+                Type type = prop.PropertyType;
+                if (item.Value is LabeledSelector lselect)
+                {
+                    prop.SetValue(v, lselect.ItemIndex);
+                }
+
+                else if (item.Value is LabeledTextBox ltbox) 
+                {
+                    if (type == typeof(int) || type == typeof(double))
+                    {
+                        //Kinda rough, but for now. Probably Temporary.
+                        if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(v, value); }
+                    }
+                    else { prop.SetValue(v, ltbox.TextContent); }
+                }
+
+                else { DisplaySystemMessage("ERROR!!! ERROR!!  MISSED ASSIGNING FIELD"); }
+               
+            }
         }
 
         //Kinda Temporary untill statistics tracking is better.
@@ -228,25 +260,17 @@ namespace Bongs_Vehicle_Viewer_V2
             aquaticTracker.Content = $"Aquatic Vehicles: {Storage.AquaticVehicles}";
         }
 
-        //These is semi-useless. Just helps reduce repeatition atm.
-        private static string ValidateTextBox(LabeledTextBox textBox)
-        {
-            if (textBox.IsNullOrEmpty(true)) 
-            {
-                return $"{textBox.TextContent} Cannot Be Blank"; 
-            }
-            return "";              
-        }
+        private static bool ValidateTextBox(LabeledTextBox textBox) => !textBox.IsNullOrEmpty(true); 
 
-        private double GetPriceValue()
+        private static double TryGetDouble(LabeledTextBox tbox)
         {
             double toReturn = -1;
-            if (double.TryParse(priceTextBox.TextContent, out double value))
+            if (double.TryParse(tbox.TextContent, out double value))
             {
                 if (value >= 0.0) { toReturn = value; }
-                else { priceTextBox.HighLight(); }
+                else { tbox.HighLight(); }
             }
-            else { priceTextBox.HighLight(); }
+            else { tbox.HighLight(); }
             return toReturn;
         }
 

@@ -10,7 +10,6 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
     public abstract class AquaticVehicle : Vehicle
     {
         public HullMaterial HullMaterial { get; set; }
-        public FuelType FuelType { get; set; }
 
         public AquaticVehicle() : base() { }
     }

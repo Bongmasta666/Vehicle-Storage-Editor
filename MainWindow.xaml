@@ -26,6 +26,8 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
+
+                            
                     
                     <Grid x:Name="propertyGrid" Margin="6" Width="140" HorizontalAlignment="Left">
                         <Grid.RowDefinitions>
@@ -36,13 +38,15 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <customcontrols:LabeledSelector x:Name="typeSelector" Grid.Row="0" LabelContent="Class"/>
+                        <customcontrols:LabeledSelector x:Name="typeSelector" Grid.Row="0" LabelContent="Class" SelectionChanged="OnTypeChange"/>
                         <customcontrols:LabeledSelector x:Name="yearSelector" Grid.Row="1" LabelContent="Year"/>
                         <customcontrols:LabeledTextBox x:Name="makeTextBox" Grid.Row="2" LabelContent="Make"/>
                         <customcontrols:LabeledTextBox x:Name="modelTextBox" Grid.Row="3" LabelContent="Model"/>
                         <customcontrols:LabeledTextBox x:Name="priceTextBox" Grid.Row="4" LabelContent="Price"/>
                         <customcontrols:LabeledSelector x:Name="stateSelector" Grid.Row="5" LabelContent="Condition"/>
+                        <Grid x:Name="testGrid" Grid.Row="6" Margin="0,2,0,0"></Grid>
                     </Grid>
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">

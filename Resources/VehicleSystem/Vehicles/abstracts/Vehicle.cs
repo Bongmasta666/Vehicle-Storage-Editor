@@ -16,6 +16,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
         public string Model { get; set; } = "";
         public double Price { get; set; } = 0.0;
         public VehicleConditon Condition { get; set; }
+        public FuelType FuelType { get; set; }
 
         public Vehicle() { }
         
