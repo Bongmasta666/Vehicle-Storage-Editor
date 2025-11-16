@@ -59,6 +59,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         public void LoadFromData(StorageData data)
         {
+            Name = data.Name;
             foreach (Vehicle v in data.List)
             {
                 Vehicles.Add(v.ID, v);
@@ -92,5 +93,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             foreach (Vehicle v in Vehicles.Values) { total += v.Price; }
             return total;
         }
+
+        public StorageData GetSaveData() { return new StorageData(Name, [.. Vehicles.Values]); }
     }
 }

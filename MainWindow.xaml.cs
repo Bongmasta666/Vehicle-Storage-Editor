@@ -1,8 +1,10 @@
-﻿using System.Windows;
+﻿using Microsoft.Win32;
+using System.IO;
+using System.Windows;
 using System.Reflection;
 using System.Collections;
-using System.Windows.Input;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Bongs_Vehicle_Viewer_V2.Resources;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
@@ -13,10 +15,14 @@ namespace Bongs_Vehicle_Viewer_V2
 {
     public partial class MainWindow : Window
     {
-        public string SavePath { get; private set; } = "vehicle_nsdata.json";
+        public static string? FileName { get; private set; }
+        public static string DefaultPath => MyFriendJson.WhereIsShouldISave();
+        public static string? LastKnownPath { get; private set; }
+        private static string SavePath => string.IsNullOrEmpty(LastKnownPath) ? DefaultPath : LastKnownPath;
+
         public VehicleStorage Storage { get; private set; }
-        public Vehicle? Selected { get; private set; } = null;
-        public bool IsEditing { get; private set; } = false;
+        public Vehicle? Selected { get; private set; }
+        public bool IsEditing { get; private set; }
 
         public Dictionary<string, LabeledControl> VehicleFields { get; private set; } = [];
         public Dictionary<string, LabeledControl> ExtraFields { get; private set; } = [];
@@ -27,7 +33,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public MainWindow()
         {
             InitializeComponent();
-
+           
             AddKeyBinding(this, Key.S, ModifierKeys.Control, OnSaveBtnPress);
             AddKeyBinding(this, Key.X, ModifierKeys.Control, OnExitBtnPress);
 
@@ -44,11 +50,8 @@ namespace Bongs_Vehicle_Viewer_V2
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
 
-            StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(SavePath);
-            Storage = new VehicleStorage(data.Name);
-            Storage.LoadFromData(data);
+            Storage = new VehicleStorage("New Storage"); //Name Should Be customizable, Maybe Force Unique Somehow
 
-            //Since Addding and removing is the how editing is handled, this could be bad or good.. Plans are to save to a log.txt file anyways
             Storage.VehicleAdded += OnVehicleAdded;
             Storage.VehicleRemoved += OnVehicleRemoved;
             Storage.VehicleUpdated += OnVehicleUpdated;
@@ -276,28 +279,74 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        private static void AddKeyBinding(UIElement control, Key key, ModifierKeys mod, ExecutedRoutedEventHandler callback)
+        private void TryOpenAndLoad()
         {
-            RoutedCommand command = new();
-            CommandBinding comBind = new (command, callback);
-            KeyBinding keyBind = new (){ Command = command, Key = key, Modifiers = mod };
-            control.CommandBindings.Add(comBind);
-            control.InputBindings.Add(keyBind);
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Json Files (*.json)| *.json",
+                InitialDirectory = SavePath,
+            };
+
+            var response = dialog.ShowDialog(this);
+            if (response == true)            
+            {      
+                try // Might as well start trying
+                {      
+                    FileName = dialog.FileName;
+                    LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName; //?null operator fixed intellisense highlighting. I wonder why.
+                    StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(dialog.FileName);
+                    Storage.LoadFromData(data);
+                    RefreshUI();
+                }
+                catch (Exception ex){ statusBar.DisplaySystemMessage(ex.Message); }
+            }
+        }
+
+        private void TrySaveAs()
+        {
+            SaveFileDialog dialog = new()
+            {
+                Filter = "Json Files (*.json)| *.json",
+                FileName = FileName ?? "NewFile.json", //Default file name might have to be dynamic
+            };
+
+            var response = dialog.ShowDialog(this);
+            if (response == true) 
+            {
+                FileName = dialog.FileName;
+                LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
+                SaveToJson(FileName);
+            }
         }
 
         //This is not automatic anymore. Consider setting a flag and possibly prompting user. Also ERROR HANDLING!!
-        private void SaveToJson()
+        private void SaveToJson(string fileName)
         {
-            StorageData data = new("Test Storage", [.. Storage.Vehicles.Values]);
-            MyFriendJson.SaveThisPlease(data, SavePath);
-            statusBar.DisplaySystemMessage("Vehicles Saved To Json File");
+            if (fileName != null) //These might is probably good for now. This should trigger SaveAs function though. Be Wary of infinite loop.
+            {
+                StorageData data = Storage.GetSaveData();
+                string path = Path.Combine(SavePath, fileName); //Using here kinda works. Not Great tho.
+                MyFriendJson.SaveThisPlease(data, path);
+                statusBar.DisplaySystemMessage("Vehicles Saved To Json File");
+            }
         }
 
         private void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetFields();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
-        private void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveToJson();
+        private void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveToJson(FileName);
+        private void OnSaveAsBtnPress(object obj, RoutedEventArgs args) => TrySaveAs();
+        private void OnOpenBtnPress(object obj, RoutedEventArgs args) => TryOpenAndLoad();
         private void OnExitBtnPress(object obj, RoutedEventArgs args) => Close();
+
+        private static void AddKeyBinding(UIElement control, Key key, ModifierKeys mod, ExecutedRoutedEventHandler callback)
+        {
+            RoutedCommand command = new();
+            CommandBinding comBind = new(command, callback);
+            KeyBinding keyBind = new() { Command = command, Key = key, Modifiers = mod };
+            control.CommandBindings.Add(comBind);
+            control.InputBindings.Add(keyBind);
+        }
     }
 }

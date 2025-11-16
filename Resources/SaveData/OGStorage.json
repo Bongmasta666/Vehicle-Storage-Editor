@@ -1,0 +1,41 @@
+{
+  "Name": "OGStorage",
+  "List": [
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Truck, Bongs_Vehicle_Viewer_V2",
+      "Mileage": 89000.0,
+      "Class": "Truck",
+      "ID": 100201,
+      "Year": 2021,
+      "Make": "Jeep",
+      "Model": "Cherokee",
+      "Price": 39000.0,
+      "Condition": 1,
+      "FuelType": 0
+    },
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.aquatic.Submarine, Bongs_Vehicle_Viewer_V2",
+      "HullMaterial": 4,
+      "Class": "Submarine",
+      "ID": 100202,
+      "Year": 1976,
+      "Make": "Beatles",
+      "Model": "Yellow Sub",
+      "Price": 69000.0,
+      "Condition": 3,
+      "FuelType": 0
+    },
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
+      "Mileage": 300080.0,
+      "Class": "Car",
+      "ID": 100203,
+      "Year": 2009,
+      "Make": "Honda",
+      "Model": "Civic",
+      "Price": 4300.0,
+      "Condition": 2,
+      "FuelType": 0
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "Name": "TestStorage",
+  "List": [
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
+      "Mileage": 100.0,
+      "Class": "Car",
+      "ID": 100200,
+      "Year": 2025,
+      "Make": "Test",
+      "Model": "saver",
+      "Price": 100.0,
+      "Condition": 0,
+      "FuelType": 0
+    }
+  ]
+}

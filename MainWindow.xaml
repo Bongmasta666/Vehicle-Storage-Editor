@@ -17,8 +17,11 @@
 
         <Menu>
             <MenuItem Header="File">
-                <MenuItem Header="New" InputGestureText="Ctrl+N" Click="OnSaveBtnPress"></MenuItem>
-                <MenuItem Header="Save" InputGestureText="Ctrl+S"></MenuItem>
+                <MenuItem Header="New" InputGestureText="Ctrl+N" IsEnabled="False"></MenuItem>
+                <MenuItem Header="Open" InputGestureText="Ctrl+O" Click="OnOpenBtnPress"></MenuItem>
+                <Separator/>
+                <MenuItem Header="Save" InputGestureText="Ctrl+S" Click="OnSaveBtnPress"></MenuItem>
+                <MenuItem Header="Save As" InputGestureText="Ctrl+E" Click="OnSaveAsBtnPress"></MenuItem>
                 <MenuItem Header="Quit" InputGestureText="Crtl+X" Click="OnExitBtnPress"></MenuItem>
             </MenuItem>
             <MenuItem Header="Options"></MenuItem>

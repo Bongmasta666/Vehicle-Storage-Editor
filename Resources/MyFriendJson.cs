@@ -26,5 +26,9 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
             var data = JsonConvert.DeserializeObject<T>(contents, jsonSettings);
             return data;
         }
+        public static string WhereIsShouldISave()
+        {
+            return Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "Resources", "SaveData");
+        }
     }
 }
