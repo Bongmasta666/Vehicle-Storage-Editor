@@ -117,7 +117,6 @@
             <TabItem Header="Statistics">
                 <Grid Background="#FFE5E5E5">
                     <StackPanel>
-
                         <Label x:Name="totalTracker" Content="Total Vehicles: 0"/>
                         <Label x:Name="motorizedTracker" Content="Motorized Vehicles: 0"/>
                         <Label x:Name="aerialTracker" Content="Aerial Vehicles: 0"/>
@@ -129,7 +128,10 @@
             
             <TabItem Header="Debug">
                 <Grid Background="#FFE5E5E5">
-
+                    <StackPanel>
+                        <Label x:Name="directoryTracker" Content="Save Directory: "/>
+                        <Label x:Name="filenameTracker" Content="File Name: None"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>

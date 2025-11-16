@@ -52,6 +52,7 @@ namespace Bongs_Vehicle_Viewer_V2
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
 
             statusBar.StartSystemClock();
+            UpdateDebugPage();
         }
 
         //Still W.I.P..could probably justify putting this onto Factory
@@ -78,17 +79,6 @@ namespace Bongs_Vehicle_Viewer_V2
                 Grid.SetRow(p, testGrid.Children.Count);
                 testGrid.Children.Add(p);
             }
-        }
-        private void OnPropScrollValueChange(object obj, RoutedPropertyChangedEventArgs<double> args)
-        {
-            propertyScrollView.ScrollToVerticalOffset(args.NewValue);
-        }
-
-        private void OnPropScrollChanged(object obj, ScrollChangedEventArgs args)
-        {
-            propertyScrollBar.Maximum = args.ExtentHeight - args.ViewportHeight;
-            propertyScrollBar.ViewportSize = args.ViewportHeight;
-            propertyScrollBar.Value = args.VerticalOffset;
         }
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
@@ -173,7 +163,7 @@ namespace Bongs_Vehicle_Viewer_V2
             if (Storage != null)
             {
                 dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
-                UpdateStats(Storage);
+                UpdateStatsPage(Storage);
             }
         }
 
@@ -200,8 +190,20 @@ namespace Bongs_Vehicle_Viewer_V2
             dataGrid.SelectedIndex = -1;
             ResetFields();
         }
-        
-        private void UpdateStats(VehicleStorage storage) 
+
+        private void OnPropScrollValueChange(object obj, RoutedPropertyChangedEventArgs<double> args)
+        {
+            propertyScrollView.ScrollToVerticalOffset(args.NewValue);
+        }
+
+        private void OnPropScrollChanged(object obj, ScrollChangedEventArgs args)
+        {
+            propertyScrollBar.Maximum = args.ExtentHeight - args.ViewportHeight;
+            propertyScrollBar.ViewportSize = args.ViewportHeight;
+            propertyScrollBar.Value = args.VerticalOffset;
+        }
+
+        private void UpdateStatsPage(VehicleStorage storage)
         {
             nameTracker.Text = $"{storage.Name}"; //This could probably be seperate and called when needed
             totalTracker.Content = $"Total Vehicles: {storage.Vehicles.Count}";
@@ -209,6 +211,13 @@ namespace Bongs_Vehicle_Viewer_V2
             motorizedTracker.Content = $"Motorized Vehicles: {storage.MotorizedVehicles}";
             aerialTracker.Content = $"Aerial Vehicles: {storage.AerialVehicles}";
             aquaticTracker.Content = $"Aquatic Vehicles: {storage.AquaticVehicles}";
+        }
+
+        private void UpdateDebugPage()
+        {
+            //Trimming the path a bit might be nice
+            directoryTracker.Content = $"Save Directory: {SavePath ?? "Undefined"}";
+            filenameTracker.Content = $"File Name: {FileName ?? "Undefined"}";
         }
 
         public static void PopulateFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
@@ -296,15 +305,16 @@ namespace Bongs_Vehicle_Viewer_V2
             };
 
             if (dialog.ShowDialog(this) == true)            
-            {      
+            {   
                 try // Might as well start trying
                 {      
                     StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(dialog.FileName);
                     Storage ??= new(data.Name); //Intellisense suggests: Compound assigment .. Guessing its a null assigment operator. Look into this
                     Storage.LoadFromData(data);
-                    FileName = dialog.FileName;
                     LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName; //?null check operator fixed intellisense highlighting. I wonder why.
+                    FileName = dialog.SafeFileName;
                     nameTracker.IsEnabled = true;
+                    UpdateDebugPage();
                     RefreshUI();
                 }
                 catch (Exception ex){ statusBar.DisplaySystemMessage(ex.Message); }
@@ -321,7 +331,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
             if (dialog.ShowDialog(this) == true) 
             {
-                FileName = dialog.FileName;
+                FileName = dialog.SafeFileName;
                 LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
                 SaveToJson();
             }
@@ -336,12 +346,13 @@ namespace Bongs_Vehicle_Viewer_V2
                 StorageData data = Storage.GetSaveData();
                 string path = Path.Combine(SavePath, FileName);
                 MyFriendJson.SaveThisPlease(data, path);
+
+                UpdateDebugPage();  //Maybe do something with these
                 statusBar.DisplaySystemMessage("Vehicles Saved To Json File");
             }
         }
 
         //If the user makes a new file .. something something.. Filename, Path, Directory.. Save
-        //Need to enable name bar here and probably up above
         private void NewStorage()
         {
             if (Storage != null) // I dunno, seems right.
@@ -351,11 +362,13 @@ namespace Bongs_Vehicle_Viewer_V2
                 Storage.VehicleRemoved -= OnVehicleRemoved;
             }
 
+            FileName = "NewStorage.json";
             Storage = new("New Storage");
             Storage.VehicleAdded += OnVehicleAdded;
             Storage.VehicleUpdated += OnVehicleUpdated;
             Storage.VehicleRemoved += OnVehicleRemoved;
             nameTracker.IsEnabled = true;
+            UpdateDebugPage();
             RefreshUI();
         }
 
