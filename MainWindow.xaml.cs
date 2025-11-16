@@ -52,7 +52,6 @@ namespace Bongs_Vehicle_Viewer_V2
 
             statusBar.StartSystemClock();
             UpdateDebugPage();
-
         }
 
         private void RebuildProperties()
@@ -85,32 +84,34 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
         {
-            string log = "";
-            log += ValidateRequiredFields(VehicleFields);
-            log += ValidateRequiredFields(ExtraFields);
-
-            if (log == "")
+            if (Storage != null)
             {
-                Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
-                v.Year = ValidYears[yearSelector.ItemIndex];
+                string log = "";
+                log += ValidateRequiredFields(VehicleFields);
+                log += ValidateRequiredFields(ExtraFields);
 
-                AssignVehicleValues(v, VehicleFields);
-                AssignVehicleValues(v, ExtraFields);
+                if (log == "")
+                {
+                    Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
+                    v.Year = ValidYears[yearSelector.ItemIndex];
+                    AssignVehicleValues(v, VehicleFields);
+                    AssignVehicleValues(v, ExtraFields);
 
-                if ( Selected != null)
-                {
-                    v.ID = Selected.ID;
-                    if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
+                    if (Selected != null)
+                    {
+                        v.ID = Selected.ID;
+                        if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
+                    }
+                    else
+                    {
+                        v.ID = VehicleFactory.GetVehicleUID();
+                        if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
+                    }
+
+                    ResetFields();
+                    RefreshUI();
                 }
-                else //Do Something about storage warnings here
-                {
-                    v.ID = VehicleFactory.GetVehicleUID();
-                    if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
-                }
-        
-                ResetFields();
-                RefreshUI();
-            }
+            } else { LogSystemInfo("NO VEHICLE STORAGE FOUND!"); }
         }
 
         private void OnVehicleSelected(object obj, RoutedEventArgs args)
@@ -226,14 +227,21 @@ namespace Bongs_Vehicle_Viewer_V2
             filenameTracker.Content = $"File Name: {FileName ?? "Undefined"}";
         }
 
+        //If we want to display errors either make non-static or some way to communicate with statusbar 
         public static void PopulateFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
         {
             foreach (var item in fieldDict)
             {
-                //Some Null Checking Here Would Be Good..
-                var value = v.GetType().GetProperty(item.Key).GetValue(v);
-                if (item.Value is LabeledSelector ls) { ls.ItemIndex = (int)value; }
-                else if (item.Value is LabeledTextBox lt) { lt.TextContent = value.ToString(); }
+                PropertyInfo? prop = v.GetType().GetProperty(item.Key);
+                if (prop != null) 
+                {
+                    var value = prop.GetValue(v);
+                    if (value != null)
+                    {
+                        if (item.Value is LabeledSelector ls) { ls.ItemIndex = (int)value; }
+                        else if (item.Value is LabeledTextBox lt) { lt.TextContent = value.ToString() ?? ""; }
+                    }            
+                }      
             }
         }
 
@@ -274,21 +282,25 @@ namespace Bongs_Vehicle_Viewer_V2
             return true;
         }
 
+        //If we want to display errors either make non-static or some way to communicate with statusbar 
         private static void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
         {
             foreach (var item in fieldDict)
             {
-                PropertyInfo prop = v.GetType().GetProperty(item.Key);
-                Type type = prop.PropertyType;
-                if (item.Value is LabeledSelector lselect) { prop.SetValue(v, lselect.ItemIndex); }
-                else if (item.Value is LabeledTextBox ltbox)
+                PropertyInfo? prop = v.GetType().GetProperty(item.Key);
+                if (prop != null) 
                 {
-                    if (type == typeof(int) || type == typeof(double))
+                    Type type = prop.PropertyType;
+                    if (item.Value is LabeledSelector lselect) { prop.SetValue(v, lselect.ItemIndex); }
+                    else if (item.Value is LabeledTextBox ltbox)
                     {
-                        //Kinda rough because we parse in validating ..  it works for now tho
-                        if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(v, value); }
+                        if (type == typeof(int) || type == typeof(double))
+                        {
+                            //Kinda rough because we parse in validating ..  it works for now tho
+                            if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(v, value); }
+                        }
+                        else { prop.SetValue(v, ltbox.TextContent); }
                     }
-                    else { prop.SetValue(v, ltbox.TextContent); }
                 }
             }
         }
@@ -332,8 +344,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     StorageData data = Storage.GetSaveData();
                     string path = Path.Combine(SavePath, FileName);
                     MyFriendJson.SaveThisPlease(data, path);
-
-                    UpdateDebugPage();  //Maybe do something with these
+                    UpdateDebugPage();
                     LogSystemInfo($"Vehicles saved to {FileName}");
                 }
                 catch (Exception ex) { LogSystemInfo(ex.Message); }
