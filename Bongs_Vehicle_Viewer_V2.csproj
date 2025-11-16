@@ -9,11 +9,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\Images\car_sport.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Resources\SaveData\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Images\car_sport.png" />
   </ItemGroup>
 
 </Project>

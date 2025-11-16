@@ -20,7 +20,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public static string? LastKnownPath { get; private set; }
         private static string SavePath => string.IsNullOrEmpty(LastKnownPath) ? DefaultPath : LastKnownPath;
 
-        public VehicleStorage Storage { get; private set; }
+        public VehicleStorage? Storage { get; private set; }
         public Vehicle? Selected { get; private set; }
         public bool IsEditing { get; private set; }
 
@@ -33,11 +33,12 @@ namespace Bongs_Vehicle_Viewer_V2
         public MainWindow()
         {
             InitializeComponent();
-           
-            AddKeyBinding(this, Key.S, ModifierKeys.Control, OnSaveBtnPress);
-            AddKeyBinding(this, Key.X, ModifierKeys.Control, OnExitBtnPress);
 
-            statusBar.StartSystemClock();
+            AddKeyBinding(this, Key.N, ModifierKeys.Control, OnNewBtnPress);
+            AddKeyBinding(this, Key.O, ModifierKeys.Control, OnOpenBtnPress);
+            AddKeyBinding(this, Key.S, ModifierKeys.Control, OnSaveBtnPress);
+            AddKeyBinding(this, Key.E, ModifierKeys.Control, OnSaveAsBtnPress);
+            AddKeyBinding(this, Key.X, ModifierKeys.Control, OnExitBtnPress);
 
             VehicleFields.Add("Make", makeTextBox);
             VehicleFields.Add("Model", modelTextBox);
@@ -50,17 +51,10 @@ namespace Bongs_Vehicle_Viewer_V2
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
 
-            Storage = new VehicleStorage("New Storage"); //Name Should Be customizable, Maybe Force Unique Somehow
-
-            Storage.VehicleAdded += OnVehicleAdded;
-            Storage.VehicleRemoved += OnVehicleRemoved;
-            Storage.VehicleUpdated += OnVehicleUpdated;
-
-            RefreshDataGrid();
-            UpdateStats();
+            statusBar.StartSystemClock();
         }
 
-        //Still W.I.P. .. Are things still jank? .. could probably justify putting this onto Factory
+        //Still W.I.P..could probably justify putting this onto Factory
         private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
         private void RebuildProperties()
         {
@@ -85,6 +79,17 @@ namespace Bongs_Vehicle_Viewer_V2
                 testGrid.Children.Add(p);
             }
         }
+        private void OnPropScrollValueChange(object obj, RoutedPropertyChangedEventArgs<double> args)
+        {
+            propertyScrollView.ScrollToVerticalOffset(args.NewValue);
+        }
+
+        private void OnPropScrollChanged(object obj, ScrollChangedEventArgs args)
+        {
+            propertyScrollBar.Maximum = args.ExtentHeight - args.ViewportHeight;
+            propertyScrollBar.ViewportSize = args.ViewportHeight;
+            propertyScrollBar.Value = args.VerticalOffset;
+        }
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
         {
@@ -105,7 +110,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     v.ID = Selected.ID;
                     if (!Storage.TryEditVehicle(v)) { statusBar.DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE"); return; }
                 }
-                else
+                else //Do Something about storage warnings here
                 {
                     v.ID = VehicleFactory.GetVehicleUID();
                     if (!Storage.TryAddVehicle(v)) { statusBar.DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return; }
@@ -136,7 +141,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnRemoveBtnPress(object obj, RoutedEventArgs args)
         {
-            if (Selected != null)
+            if (Storage != null && Selected != null)
             {
                 if (!Storage.TryRemoveVehicle(Selected.ID)) { statusBar.DisplaySystemMessage("FAILED TO REMOVE VEHICLE"); }
             }
@@ -144,30 +149,32 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnVehicleAdded(object? obj, EventArgs args)
         {
-            statusBar.DisplaySystemMessage("Vehicle Added Succesfully");
             RefreshUI();
+            statusBar.DisplaySystemMessage("Vehicle Added Succesfully");
         }
 
         private void OnVehicleUpdated(object? obj, EventArgs args)
         {
-            statusBar.DisplaySystemMessage("Vehicle Updated Successfully");
             RefreshUI();
             UnselectItem();
-
             tabControl.SelectedIndex = 1;
+            statusBar.DisplaySystemMessage("Vehicle Updated Successfully");
         }
 
         private void OnVehicleRemoved(object? obj, EventArgs args)
         {
-            statusBar.DisplaySystemMessage("Vehicle Removed Successfully");
             RefreshUI();
             UnselectItem();
+            statusBar.DisplaySystemMessage("Vehicle Removed Successfully");
         }
 
         private void RefreshUI()
         {
-            RefreshDataGrid();
-            UpdateStats();
+            if (Storage != null)
+            {
+                dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
+                UpdateStats(Storage);
+            }
         }
 
         private void PopulateAllFields(Vehicle vehicle)
@@ -194,13 +201,14 @@ namespace Bongs_Vehicle_Viewer_V2
             ResetFields();
         }
         
-        private void UpdateStats()
+        private void UpdateStats(VehicleStorage storage) 
         {
-            totalTracker.Content = $"Total Vehicles: {Storage.Vehicles.Count}";
-            priceTracker.Content = $"Total Price: {Storage.TotalValue:C}";
-            motorizedTracker.Content = $"Motorized Vehicles: {Storage.MotorizedVehicles}";
-            aerialTracker.Content = $"Aerial Vehicles: {Storage.AerialVehicles}";
-            aquaticTracker.Content = $"Aquatic Vehicles: {Storage.AquaticVehicles}";
+            nameTracker.Text = $"{storage.Name}"; //This could probably be seperate and called when needed
+            totalTracker.Content = $"Total Vehicles: {storage.Vehicles.Count}";
+            priceTracker.Content = $"Total Price: {storage.TotalValue:C}";
+            motorizedTracker.Content = $"Motorized Vehicles: {storage.MotorizedVehicles}";
+            aerialTracker.Content = $"Aerial Vehicles: {storage.AerialVehicles}";
+            aquaticTracker.Content = $"Aquatic Vehicles: {storage.AquaticVehicles}";
         }
 
         public static void PopulateFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
@@ -287,15 +295,16 @@ namespace Bongs_Vehicle_Viewer_V2
                 InitialDirectory = SavePath,
             };
 
-            var response = dialog.ShowDialog(this);
-            if (response == true)            
+            if (dialog.ShowDialog(this) == true)            
             {      
                 try // Might as well start trying
                 {      
-                    FileName = dialog.FileName;
-                    LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName; //?null operator fixed intellisense highlighting. I wonder why.
                     StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(dialog.FileName);
+                    Storage ??= new(data.Name); //Intellisense suggests: Compound assigment .. Guessing its a null assigment operator. Look into this
                     Storage.LoadFromData(data);
+                    FileName = dialog.FileName;
+                    LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName; //?null check operator fixed intellisense highlighting. I wonder why.
+                    nameTracker.IsEnabled = true;
                     RefreshUI();
                 }
                 catch (Exception ex){ statusBar.DisplaySystemMessage(ex.Message); }
@@ -310,32 +319,60 @@ namespace Bongs_Vehicle_Viewer_V2
                 FileName = FileName ?? "NewFile.json", //Default file name might have to be dynamic
             };
 
-            var response = dialog.ShowDialog(this);
-            if (response == true) 
+            if (dialog.ShowDialog(this) == true) 
             {
                 FileName = dialog.FileName;
                 LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
-                SaveToJson(FileName);
+                SaveToJson();
             }
         }
 
         //This is not automatic anymore. Consider setting a flag and possibly prompting user. Also ERROR HANDLING!!
-        private void SaveToJson(string fileName)
+        //This should probably trigger SaveAs function though. Be Wary of infinite loop.
+        private void SaveToJson() 
         {
-            if (fileName != null) //These might is probably good for now. This should trigger SaveAs function though. Be Wary of infinite loop.
+            if (Storage != null && FileName != null) //These might be good for now. 
             {
                 StorageData data = Storage.GetSaveData();
-                string path = Path.Combine(SavePath, fileName); //Using here kinda works. Not Great tho.
+                string path = Path.Combine(SavePath, FileName);
                 MyFriendJson.SaveThisPlease(data, path);
                 statusBar.DisplaySystemMessage("Vehicles Saved To Json File");
             }
         }
 
-        private void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
+        //If the user makes a new file .. something something.. Filename, Path, Directory.. Save
+        //Need to enable name bar here and probably up above
+        private void NewStorage()
+        {
+            if (Storage != null) // I dunno, seems right.
+            {
+                Storage.VehicleAdded -= OnVehicleAdded;
+                Storage.VehicleUpdated -= OnVehicleUpdated;
+                Storage.VehicleRemoved -= OnVehicleRemoved;
+            }
+
+            Storage = new("New Storage");
+            Storage.VehicleAdded += OnVehicleAdded;
+            Storage.VehicleUpdated += OnVehicleUpdated;
+            Storage.VehicleRemoved += OnVehicleRemoved;
+            nameTracker.IsEnabled = true;
+            RefreshUI();
+        }
+
+        private void OnStorageNameChange(object obj, KeyEventArgs args) 
+        { 
+            if (args.Key == Key.Enter && Storage != null)
+            { 
+                Storage.Name = nameTracker.Text;
+                dataGrid.Focus(); // Kinda works
+            }           
+        }
+
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetFields();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
-        private void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveToJson(FileName);
+        private void OnNewBtnPress(object obj, RoutedEventArgs args) => NewStorage();
+        private void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveToJson();
         private void OnSaveAsBtnPress(object obj, RoutedEventArgs args) => TrySaveAs();
         private void OnOpenBtnPress(object obj, RoutedEventArgs args) => TryOpenAndLoad();
         private void OnExitBtnPress(object obj, RoutedEventArgs args) => Close();

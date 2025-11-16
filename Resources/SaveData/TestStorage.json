@@ -1,5 +1,5 @@
 {
-  "Name": "TestStorage",
+  "Name": "Secret Storage",
   "List": [
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",

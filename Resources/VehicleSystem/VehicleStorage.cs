@@ -71,7 +71,6 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             VehicleFactory.SetVehicleUID(VehicleUid);
         }
 
-
         //String literals suck. Maybe Just compare type with typeof or make enum.
         private void TallyVehicle(Vehicle vehicle, bool remove = false)
         {
