@@ -1,5 +1,6 @@
-﻿using System.Reflection;
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
+﻿using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
+using System.Reflection;
+using System.Windows.Controls;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 {
@@ -23,6 +24,13 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             if (!classType.IsClass) { throw new ArgumentException($"Unable to create a Type Dictionary of Type {nameof(classType)}"); }
             return Assembly.GetExecutingAssembly().GetTypes()
                 .Where(t => classType.IsAssignableFrom(t) && t.IsAbstract == includeAbstract).ToDictionary(t => t.Name, t => t);
+        }
+        private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
+
+        public static PropertyInfo[] GetExtendedProps(string className)
+        {
+            Type type = TypeDictonary[className];
+            return type.BaseType.GetProperties(PropertyFlags);
         }
 
         public static List<string> GetClassNames()

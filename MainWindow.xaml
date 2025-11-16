@@ -34,7 +34,6 @@
                         <RowDefinition/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition/>
@@ -45,9 +44,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        
-                        <ScrollBar x:Name="propertyScrollBar" HorizontalAlignment="Left" Visibility="Visible" ValueChanged="OnPropScrollValueChange"/>
-
+                        <ScrollBar x:Name="propertyScrollBar" Grid.Column="0" HorizontalAlignment="Left" Visibility="Visible" ValueChanged="OnPropScrollValueChange"/>
                         <ScrollViewer x:Name="propertyScrollView" Grid.Column="1" VerticalScrollBarVisibility="Hidden" ScrollChanged="OnPropScrollChanged">
                             <Grid x:Name="propertyGrid" Margin="6" Width="120" HorizontalAlignment="Left">
                                 <Grid.RowDefinitions>
@@ -67,12 +64,11 @@
                                 <customcontrols:LabeledTextBox x:Name="priceTextBox" Grid.Row="4" LabelContent="Price" IsNumericField="True"/>
                                 <customcontrols:LabeledSelector x:Name="stateSelector" Grid.Row="5" LabelContent="Condition"/>
                                 <customcontrols:LabeledSelector x:Name="fuelSelector" Grid.Row="6" LabelContent="FuelType"/>
-                                <Grid x:Name="testGrid" Grid.Row="7" Margin="0,2,0,0"></Grid>
+                                <Grid x:Name="extendedGrid" Grid.Row="7" Margin="0,2,0,0"></Grid>
                             </Grid>
                         </ScrollViewer>
                     </Grid>
                   
-
                     <Grid Grid.Column="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>

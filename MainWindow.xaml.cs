@@ -55,30 +55,32 @@ namespace Bongs_Vehicle_Viewer_V2
             UpdateDebugPage();
         }
 
-        //Still W.I.P..could probably justify putting this onto Factory
-        private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
         private void RebuildProperties()
         {
             ExtraFields = [];
-            testGrid.Children.Clear();
-            Type type = VehicleFactory.TypeDictonary[typeSelector.ItemName];
-            PropertyInfo[] subprops = type.BaseType.GetProperties(PropertyFlags);
+            extendedGrid.Children.Clear();
+            PropertyInfo[] subprops = VehicleFactory.GetExtendedProps(typeSelector.ItemName);
+
             foreach (var item in subprops)
             {
-                LabeledControl? p;
-                Type t = item.PropertyType;
+                Type type = item.PropertyType;
+                LabeledControl? newControl;
 
                 if (item.Name == "ID") { continue; }
-                else if (t.IsEnum) { p = BuildSelector(item.Name, Enum.GetValues(t)); }
-                else { p = new LabeledTextBox() { LabelContent = item.Name }; }
+                else if (type.IsEnum) { newControl = BuildSelector(item.Name, Enum.GetValues(type)); }
+                else { newControl = new LabeledTextBox() { LabelContent = item.Name }; }
 
-                ExtraFields.Add(item.Name, p);
-
-                RowDefinition r = new() { Height = GridLength.Auto };
-                testGrid.RowDefinitions.Add(r);
-                Grid.SetRow(p, testGrid.Children.Count);
-                testGrid.Children.Add(p);
+                AddToPropertyGrid(newControl);
+                ExtraFields.Add(item.Name, newControl);
             }
+        }
+
+        private void AddToPropertyGrid(LabeledControl control)
+        {
+            Grid.SetRow(control, extendedGrid.Children.Count);
+            RowDefinition r = new() { Height = GridLength.Auto };
+            extendedGrid.RowDefinitions.Add(r);
+            extendedGrid.Children.Add(control);
         }
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
@@ -241,8 +243,7 @@ namespace Bongs_Vehicle_Viewer_V2
                 {
                     if (!ValidateTextBox(lt)) { log += $"{item.Key} Is Empty Or Invalid\n"; }
                 }
-            }
-            return log;
+            }return log;
         }
 
         private static void ResetFieldValues(Dictionary<string, LabeledControl> fieldDict)
