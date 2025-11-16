@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Reflection;
 using System.Collections;
+using System.Windows.Input;
 using System.Windows.Controls;
 using Bongs_Vehicle_Viewer_V2.Resources;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
@@ -26,6 +27,10 @@ namespace Bongs_Vehicle_Viewer_V2
         public MainWindow()
         {
             InitializeComponent();
+
+            AddKeyBinding(this, Key.S, ModifierKeys.Control, OnSaveBtnPress);
+            AddKeyBinding(this, Key.X, ModifierKeys.Control, OnExitBtnPress);
+
             statusBar.StartSystemClock();
 
             VehicleFields.Add("Make", makeTextBox);
@@ -112,9 +117,11 @@ namespace Bongs_Vehicle_Viewer_V2
             if (dataGrid.SelectedIndex != -1)
             {
                 Selected = (Vehicle)dataGrid.SelectedItem;
+                PopulateAllFields(Selected);
+                submitBtn.Content = "Update";
                 removeBtn.IsEnabled = true;
                 unselectBtn.IsEnabled = true;
-                OnEditBtnPress(obj, args); //Temporary
+                IsEditing = true;
             }
             else 
             {
@@ -135,13 +142,13 @@ namespace Bongs_Vehicle_Viewer_V2
         private void OnVehicleAdded(object? obj, EventArgs args)
         {
             statusBar.DisplaySystemMessage("Vehicle Added Succesfully");
-            SaveAndRefresh();
+            RefreshUI();
         }
 
         private void OnVehicleUpdated(object? obj, EventArgs args)
         {
             statusBar.DisplaySystemMessage("Vehicle Updated Successfully");
-            SaveAndRefresh();
+            RefreshUI();
             UnselectItem();
 
             tabControl.SelectedIndex = 1;
@@ -150,26 +157,14 @@ namespace Bongs_Vehicle_Viewer_V2
         private void OnVehicleRemoved(object? obj, EventArgs args)
         {
             statusBar.DisplaySystemMessage("Vehicle Removed Successfully");
-            SaveAndRefresh();
+            RefreshUI();
             UnselectItem();
         }
 
-        private void SaveAndRefresh()
+        private void RefreshUI()
         {
-            SaveToJson();
             RefreshDataGrid();
             UpdateStats();
-        }
-
-        private void OnEditBtnPress(object obj, RoutedEventArgs ars)
-        {
-            if (Selected != null)
-            {
-                PopulateAllFields(Selected);
-                tabControl.SelectedIndex = 0;
-                submitBtn.Content = "Update";
-                IsEditing = true;
-            }
         }
 
         private void PopulateAllFields(Vehicle vehicle)
@@ -203,12 +198,6 @@ namespace Bongs_Vehicle_Viewer_V2
             motorizedTracker.Content = $"Motorized Vehicles: {Storage.MotorizedVehicles}";
             aerialTracker.Content = $"Aerial Vehicles: {Storage.AerialVehicles}";
             aquaticTracker.Content = $"Aquatic Vehicles: {Storage.AquaticVehicles}";
-        }
-
-        private void SaveToJson()
-        {
-            StorageData data = new("Test Storage", [.. Storage.Vehicles.Values]);
-            MyFriendJson.SaveThisPlease(data, SavePath);
         }
 
         public static void PopulateFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
@@ -287,9 +276,28 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
+        private static void AddKeyBinding(UIElement control, Key key, ModifierKeys mod, ExecutedRoutedEventHandler callback)
+        {
+            RoutedCommand command = new();
+            CommandBinding comBind = new (command, callback);
+            KeyBinding keyBind = new (){ Command = command, Key = key, Modifiers = mod };
+            control.CommandBindings.Add(comBind);
+            control.InputBindings.Add(keyBind);
+        }
+
+        //This is not automatic anymore. Consider setting a flag and possibly prompting user. Also ERROR HANDLING!!
+        private void SaveToJson()
+        {
+            StorageData data = new("Test Storage", [.. Storage.Vehicles.Values]);
+            MyFriendJson.SaveThisPlease(data, SavePath);
+            statusBar.DisplaySystemMessage("Vehicles Saved To Json File");
+        }
+
         private void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetFields();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
+        private void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveToJson();
+        private void OnExitBtnPress(object obj, RoutedEventArgs args) => Close();
     }
 }

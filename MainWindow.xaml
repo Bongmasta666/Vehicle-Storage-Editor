@@ -17,9 +17,9 @@
 
         <Menu>
             <MenuItem Header="File">
-                <MenuItem Header="New" InputGestureText="Ctrl+N"></MenuItem>
+                <MenuItem Header="New" InputGestureText="Ctrl+N" Click="OnSaveBtnPress"></MenuItem>
                 <MenuItem Header="Save" InputGestureText="Ctrl+S"></MenuItem>
-                <MenuItem Header="Quit" InputGestureText="Crtl+X"></MenuItem>
+                <MenuItem Header="Quit" InputGestureText="Crtl+X" Click="OnExitBtnPress"></MenuItem>
             </MenuItem>
             <MenuItem Header="Options"></MenuItem>
         </Menu>
