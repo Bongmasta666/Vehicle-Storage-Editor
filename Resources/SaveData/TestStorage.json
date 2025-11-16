@@ -9,7 +9,7 @@
       "Year": 1979,
       "Make": "U.S.S.",
       "Model": "RedOctober",
-      "Price": 3700000.0,
+      "Price": 370000.0,
       "Condition": 3,
       "FuelType": 1
     },
@@ -24,6 +24,18 @@
       "Price": 89000.0,
       "Condition": 0,
       "FuelType": 2
+    },
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
+      "Mileage": 225000.0,
+      "Class": "Car",
+      "ID": 100202,
+      "Year": 1990,
+      "Make": "Dodge",
+      "Model": "Charger",
+      "Price": 62500.0,
+      "Condition": 3,
+      "FuelType": 0
     }
   ]
 }

@@ -22,7 +22,6 @@ namespace Bongs_Vehicle_Viewer_V2
 
         public VehicleStorage? Storage { get; private set; }
         public Vehicle? Selected { get; private set; }
-        public bool IsEditing { get; private set; }
 
         public Dictionary<string, LabeledControl> VehicleFields { get; private set; } = [];
         public Dictionary<string, LabeledControl> ExtraFields { get; private set; } = [];
@@ -98,7 +97,7 @@ namespace Bongs_Vehicle_Viewer_V2
                 AssignVehicleValues(v, VehicleFields);
                 AssignVehicleValues(v, ExtraFields);
 
-                if (IsEditing && Selected != null)
+                if ( Selected != null)
                 {
                     v.ID = Selected.ID;
                     if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
@@ -123,7 +122,6 @@ namespace Bongs_Vehicle_Viewer_V2
                 submitBtn.Content = "Update";
                 removeBtn.IsEnabled = true;
                 unselectBtn.IsEnabled = true;
-                IsEditing = true;
             }
             else 
             {
@@ -189,7 +187,6 @@ namespace Bongs_Vehicle_Viewer_V2
         public void UnselectItem()
         {
             Selected = null;
-            IsEditing = false;
             dataGrid.SelectedIndex = -1;
             ResetFields();
         }
