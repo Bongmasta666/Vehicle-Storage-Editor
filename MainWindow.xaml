@@ -7,14 +7,24 @@
         xmlns:customcontrols="clr-namespace:Bongs_Vehicle_Viewer_V2.Resources.CustomControls"
         mc:Ignorable="d"
         Title="Bongs Vehicle Viewer" Height="480" MinHeight="480" Width="600" WindowStartupLocation="CenterScreen">
-    <Grid x:Name="rootGrid">
+    
+    <Grid x:Name="rootGrid"  Background="DarkGray">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+
+        <Menu>
+            <MenuItem Header="File">
+                <MenuItem Header="New" InputGestureText="Ctrl+N"></MenuItem>
+                <MenuItem Header="Save" InputGestureText="Ctrl+S"></MenuItem>
+                <MenuItem Header="Quit" InputGestureText="Crtl+X"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="Options"></MenuItem>
+        </Menu>
         
-        <TabControl x:Name="tabControl" Grid.Row="1">
+        <TabControl x:Name="tabControl" Grid.Row="1" Margin="2">
             <TabItem Header="Registration">
                 <Grid Background="WhiteSmoke">
                     <Grid.RowDefinitions>
@@ -27,60 +37,59 @@
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
 
-                            
-                    
-                    <Grid x:Name="propertyGrid" Margin="6" Width="140" HorizontalAlignment="Left">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <customcontrols:LabeledSelector x:Name="typeSelector" Grid.Row="0" LabelContent="Class" SelectionChanged="OnTypeChange"/>
-                        <customcontrols:LabeledSelector x:Name="yearSelector" Grid.Row="1" LabelContent="Year"/>
-                        <customcontrols:LabeledTextBox x:Name="makeTextBox" Grid.Row="2" LabelContent="Make"/>
-                        <customcontrols:LabeledTextBox x:Name="modelTextBox" Grid.Row="3" LabelContent="Model"/>
-                        <customcontrols:LabeledTextBox x:Name="priceTextBox" Grid.Row="4" LabelContent="Price" IsNumericField="True"/>
-                        <customcontrols:LabeledSelector x:Name="stateSelector" Grid.Row="5" LabelContent="Condition"/>
-                        <Grid x:Name="testGrid" Grid.Row="6" Margin="0,2,0,0"></Grid>
-                    </Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Visible">
+                        <Grid x:Name="propertyGrid" Margin="6" Width="140" HorizontalAlignment="Left">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <customcontrols:LabeledSelector x:Name="typeSelector" Grid.Row="0" LabelContent="Class" SelectionChanged="OnTypeChange"/>
+                            <customcontrols:LabeledSelector x:Name="yearSelector" Grid.Row="1" LabelContent="Year"/>
+                            <customcontrols:LabeledTextBox x:Name="makeTextBox" Grid.Row="2" LabelContent="Make"/>
+                            <customcontrols:LabeledTextBox x:Name="modelTextBox" Grid.Row="3" LabelContent="Model"/>
+                            <customcontrols:LabeledTextBox x:Name="priceTextBox" Grid.Row="4" LabelContent="Price" IsNumericField="True"/>
+                            <customcontrols:LabeledSelector x:Name="stateSelector" Grid.Row="5" LabelContent="Condition"/>
+                            <customcontrols:LabeledSelector x:Name="fuelSelector" Grid.Row="6" LabelContent="FuelType"/>
+                            <Grid x:Name="testGrid" Grid.Row="7" Margin="0,2,0,0"></Grid>
+                        </Grid>
+                    </ScrollViewer>
 
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">
-                        <Button x:Name="submitBtn" Content="Submit" Width="64" Margin="4,2" FontSize="14" Click="OnSubmitBtnPress"/>
-                        <Button x:Name="resetBtn" Content="Reset" Width="64" Margin="4,2" FontSize="14" Click="OnResetBtnPress"/>
-                    </StackPanel>
-                    
-                </Grid>
-            </TabItem>
-            <TabItem Header="Catalogue">
-                <Grid Background="#FFE5E5E5">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <DataGrid x:Name="dataGrid" Grid.Row="0" IsReadOnly="True" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
+                    <DataGrid x:Name="dataGrid" Grid.Column="1" IsReadOnly="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Width="0.8*" Binding="{Binding ID}"/>
-                            <DataGridTextColumn Header="Class" Width="*" Binding="{Binding Class}"/>
-                            <DataGridTextColumn Header="Make" Width="*" Binding="{Binding Make}"/>
-                            <DataGridTextColumn Header="Model" Width="*" Binding="{Binding Model}"/>
-                            <DataGridTextColumn Header="Year" Width="*" Binding="{Binding Year}"/>
-                            <DataGridTextColumn Header="Price" Width="*" Binding="{Binding Price, StringFormat=C}"/>
-                            <DataGridTextColumn Header="Condition" Width="*" Binding="{Binding Condition}"/>
+                            <DataGridTextColumn Header="ID" MinWidth="64" Width="Auto" Binding="{Binding ID}"/>
+                            <DataGridTextColumn Header="Class" MinWidth="80" Width="Auto" Binding="{Binding Class}"/>
+                            <DataGridTextColumn Header="Make" MinWidth="80" Width="Auto" Binding="{Binding Make}"/>
+                            <DataGridTextColumn Header="Model" MinWidth="80" Width="Auto" Binding="{Binding Model}"/>
+                            <DataGridTextColumn Header="Year" MinWidth="72" Width="Auto" Binding="{Binding Year}"/>
+                            <DataGridTextColumn Header="Price" MinWidth="80" Width="Auto" Binding="{Binding Price, StringFormat=C}"/>
+                            <DataGridTextColumn Header="Condition" MinWidth="64" Width="Auto" Binding="{Binding Condition}"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">
-                        <Button x:Name="editBtn" Content="Edit" Width="64" Margin="4,2" FontSize="14" Click="OnEditBtnPress" IsEnabled="False"/>
-                        <Button x:Name="removeBtn" Content="Remove" Width="64" Margin="4,2" FontSize="14" Click="OnRemoveBtnPress" IsEnabled="False"/>
-                        <Button x:Name="unselectBtn" Content="Unselect" Width="64" Margin="4,2" FontSize="14" Click="OnUnselectBtnPress" IsEnabled="False"/>
-                    </StackPanel>
+                    <Grid Grid.Row="1" Grid.ColumnSpan="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">
+                            <Button x:Name="submitBtn" Content="Submit" Width="64" Margin="4,2" FontSize="14" Click="OnSubmitBtnPress"/>
+                            <Button x:Name="resetBtn" Content="Clear" Width="64" Margin="4,2" FontSize="14" Click="OnResetBtnPress"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">
+                            <Button x:Name="removeBtn" Content="Remove" Width="64" Margin="4,2" FontSize="14" Click="OnRemoveBtnPress" IsEnabled="False"/>
+                            <Button x:Name="unselectBtn" Content="Unselect" Width="64" Margin="4,2" FontSize="14" Click="OnUnselectBtnPress" IsEnabled="False"/>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </TabItem>
+            
             <TabItem Header="Statistics">
                 <Grid Background="#FFE5E5E5">
                     <StackPanel>
@@ -90,6 +99,12 @@
                         <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>
                         <Label x:Name="priceTracker" Content="Total Price: 0"/>
                     </StackPanel>
+                </Grid>
+            </TabItem>
+            
+            <TabItem Header="Debug">
+                <Grid Background="#FFE5E5E5">
+
                 </Grid>
             </TabItem>
         </TabControl>

@@ -32,10 +32,12 @@ namespace Bongs_Vehicle_Viewer_V2
             VehicleFields.Add("Model", modelTextBox);
             VehicleFields.Add("Price", priceTextBox);
             VehicleFields.Add("Condition", stateSelector);
+            VehicleFields.Add("FuelType", fuelSelector);
 
             typeSelector.SetItemSource(classNames);
             yearSelector.SetItemSource(ValidYears);
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
+            fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
 
             StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(SavePath);
             Storage = new VehicleStorage(data.Name);
@@ -106,17 +108,16 @@ namespace Bongs_Vehicle_Viewer_V2
         }
 
         private void OnVehicleSelected(object obj, RoutedEventArgs args)
-        {
+        {         
             if (dataGrid.SelectedIndex != -1)
             {
-                editBtn.IsEnabled = true;
+                Selected = (Vehicle)dataGrid.SelectedItem;
                 removeBtn.IsEnabled = true;
                 unselectBtn.IsEnabled = true;
-                Selected = (Vehicle)dataGrid.SelectedItem;
+                OnEditBtnPress(obj, args); //Temporary
             }
             else 
             {
-                editBtn.IsEnabled = false;
                 removeBtn.IsEnabled = false;
                 unselectBtn.IsEnabled = false;
                 Selected = null; 
@@ -164,10 +165,10 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Selected != null)
             {
-                IsEditing = true;
                 PopulateAllFields(Selected);
                 tabControl.SelectedIndex = 0;
                 submitBtn.Content = "Update";
+                IsEditing = true;
             }
         }
 
@@ -187,17 +188,12 @@ namespace Bongs_Vehicle_Viewer_V2
             ResetFieldValues(ExtraFields);
         }
 
-        public void ResetAndDeselect()
-        {
-            ResetFields();
-            UnselectItem();
-        }
-
         public void UnselectItem()
         {
             Selected = null;
             IsEditing = false;
             dataGrid.SelectedIndex = -1;
+            ResetFields();
         }
         
         private void UpdateStats()
@@ -293,7 +289,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
-        private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetAndDeselect();
+        private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetFields();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
     }
 }
