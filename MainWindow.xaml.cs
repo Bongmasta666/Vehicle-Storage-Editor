@@ -2,7 +2,6 @@
 using System.Reflection;
 using System.Collections;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using Bongs_Vehicle_Viewer_V2.Resources;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
@@ -27,7 +26,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public MainWindow()
         {
             InitializeComponent();
-            StartSystemClock(timeLabel);
+            statusBar.StartSystemClock();
 
             VehicleFields.Add("Make", makeTextBox);
             VehicleFields.Add("Model", modelTextBox);
@@ -42,9 +41,8 @@ namespace Bongs_Vehicle_Viewer_V2
             Storage = new VehicleStorage(data.Name);
             Storage.LoadFromData(data);
 
-            //Testing New Message handling, seperating status bar into a user or extended control could make this nice.
             //Since Addding and removing is the how editing is handled, this could be bad or good.. Plans are to save to a log.txt file anyways
-            Storage.VehicleAdded += OnVehicleRemoved;
+            Storage.VehicleAdded += OnVehicleAdded;
             Storage.VehicleRemoved += OnVehicleRemoved;
             Storage.VehicleUpdated += OnVehicleUpdated;
 
@@ -52,7 +50,7 @@ namespace Bongs_Vehicle_Viewer_V2
             UpdateStats();
         }
 
-        //Still W.I.P. .. Are things still jank? .. possible to abstract this all out
+        //Still W.I.P. .. Are things still jank? .. could probably justify putting this onto Factory
         private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
         private void RebuildProperties()
         {
@@ -95,13 +93,15 @@ namespace Bongs_Vehicle_Viewer_V2
                 if (IsEditing && Selected != null)
                 {
                     v.ID = Selected.ID;
-                    if (!Storage.TryEditVehicle(v)) { DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE"); return; }
+                    if (!Storage.TryEditVehicle(v)) { statusBar.DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE"); return; }
                 }
                 else
                 {
                     v.ID = VehicleFactory.GetVehicleUID();
-                    if (!Storage.TryAddVehicle(v)) { DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return; }
+                    if (!Storage.TryAddVehicle(v)) { statusBar.DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return; }
                 }
+
+                ResetFields();
             }
         }
 
@@ -127,19 +127,19 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Selected != null)
             {
-                if (!Storage.TryRemoveVehicle(Selected.ID)) { DisplaySystemMessage("FAILED TO REMOVE VEHICLE"); }
+                if (!Storage.TryRemoveVehicle(Selected.ID)) { statusBar.DisplaySystemMessage("FAILED TO REMOVE VEHICLE"); }
             }
         }
 
         private void OnVehicleAdded(object? obj, EventArgs args)
         {
-            DisplaySystemMessage("Vehicle Added Succesfully");
+            statusBar.DisplaySystemMessage("Vehicle Added Succesfully");
             SaveAndRefresh();
         }
 
         private void OnVehicleUpdated(object? obj, EventArgs args)
         {
-            DisplaySystemMessage("Vehicle Updated Successfully");
+            statusBar.DisplaySystemMessage("Vehicle Updated Successfully");
             SaveAndRefresh();
             UnselectItem();
 
@@ -148,7 +148,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnVehicleRemoved(object? obj, EventArgs args)
         {
-            DisplaySystemMessage("Vehicle Removed Successfully");
+            statusBar.DisplaySystemMessage("Vehicle Removed Successfully");
             SaveAndRefresh();
             UnselectItem();
         }
@@ -179,12 +179,17 @@ namespace Bongs_Vehicle_Viewer_V2
             PopulateFromDict(vehicle, ExtraFields);
         }
 
-        public void ResetRegistration()
+        public void ResetFields()
         {
             yearSelector.ItemIndex = 0;
             submitBtn.Content = "Submit";
             ResetFieldValues(VehicleFields);
             ResetFieldValues(ExtraFields);
+        }
+
+        public void ResetAndDeselect()
+        {
+            ResetFields();
             UnselectItem();
         }
 
@@ -202,11 +207,6 @@ namespace Bongs_Vehicle_Viewer_V2
             motorizedTracker.Content = $"Motorized Vehicles: {Storage.MotorizedVehicles}";
             aerialTracker.Content = $"Aerial Vehicles: {Storage.AerialVehicles}";
             aquaticTracker.Content = $"Aquatic Vehicles: {Storage.AquaticVehicles}";
-        }
-
-        public void DisplaySystemMessage(string message)
-        {
-            statusOutput.Content = $"System [{timeLabel.Content}]: " + message;
         }
 
         private void SaveToJson()
@@ -291,18 +291,9 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        //Will probably be seperated onto a statusbar object. Label type argument is a lil rigged but meh.
-        //Added note: This runs harsh in debug mode but is fine otherwise.
-        public static void StartSystemClock(Label printTo)
-        {
-            DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(100) };
-            timer.Tick += (obj, args) => { printTo.Content = DateTime.Now.ToLongTimeString(); };
-            timer.Start();
-        }
-
         private void RefreshDataGrid() => dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
-        private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetRegistration();
+        private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetAndDeselect();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
     }
 }

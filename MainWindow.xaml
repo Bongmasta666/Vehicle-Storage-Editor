@@ -94,13 +94,6 @@
             </TabItem>
         </TabControl>
 
-        <StatusBar Grid.Row="2">
-            <StatusBarItem HorizontalAlignment="Left">
-                <Label x:Name="statusOutput" Content="System:" Padding="1" HorizontalAlignment="Left"/>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <Label x:Name="timeLabel" Content="00:00:00" Padding="1" HorizontalAlignment="Right"/>
-            </StatusBarItem>
-        </StatusBar>
+        <customcontrols:BongsStatusBar x:Name="statusBar" Grid.Row="2"/>
     </Grid>
 </Window>
