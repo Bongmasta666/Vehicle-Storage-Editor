@@ -1,4 +1,9 @@
-﻿
+﻿/* File: Vehicle.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: The foundation and base class of all vehicles.
+ */
+
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
 {
     public abstract class Vehicle

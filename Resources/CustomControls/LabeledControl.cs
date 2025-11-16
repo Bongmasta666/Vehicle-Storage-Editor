@@ -1,4 +1,10 @@
-﻿using System.Windows;
+﻿/* File: LabeledControl.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: An abstract class that extends from <StackPanel> made to display a >Label> and contain other controls
+ */
+
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Controls;
 

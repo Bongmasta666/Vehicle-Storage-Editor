@@ -1,5 +1,12 @@
-﻿using System.Reflection;
-using System.Windows.Media;
+﻿/* File: VehicleFactory.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: 
+ * This file was originally going to host many functions for getting the required vehicles.
+ * Thanks to the reflection library, this now mainly hosts static utility functions and vehicle creation properties.
+ */
+
+using System.Reflection;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem

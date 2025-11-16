@@ -1,10 +1,14 @@
-﻿using System.Windows;
+﻿/* File: BongsStatusBar.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: 
+ * A custom control that extends from <StatusBar> that can be used to display various information.
+ */
+
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using System.Windows.Controls.Primitives;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Windows.Navigation;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
 {

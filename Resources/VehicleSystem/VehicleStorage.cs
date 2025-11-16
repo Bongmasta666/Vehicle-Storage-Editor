@@ -1,4 +1,12 @@
-﻿using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
+﻿/* File: VehicleStorage.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: 
+ * This files main purpose is to keep track of vehicles and various statistics. Consider its a garage.
+ * Its contains a few functions for Adding/Removing/Editing/Saving/Loading Vehicles. Still W.I.P
+ */
+
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 {
@@ -18,7 +26,6 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         public VehicleStorage(string name) { Name = name; }
 
-        //with events its kinda possible to makes these void and not worry bout returns.. mhmm...
         public bool TryAddVehicle(Vehicle vehicle)
         {
             if (vehicle.ID == -1) { return false; } 

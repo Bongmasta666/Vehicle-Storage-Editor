@@ -1,16 +1,23 @@
-﻿using Bongs_Vehicle_Viewer_V2.Resources;
-using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
+﻿/* File: MainWindow.xaml.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: 
+ * This file is the root of the application and contains code for the Main Window and marjority of the UI functionality
+ */
+
 using Microsoft.Win32;
 using System.Collections;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Bongs_Vehicle_Viewer_V2.Resources;
+using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
+using System.Diagnostics;
 
 namespace Bongs_Vehicle_Viewer_V2
 {

@@ -1,7 +1,12 @@
-﻿
+﻿/* File: AerialVehicle.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: 
+ * This class represents air based vehicles with engines and is an abstract extension of <Vehicle>
+ */
+
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts
 {
-    //This Class Represents Air Based Vehicles With Engines
     public abstract class AerialVehicle : Vehicle
     {
         public double MaxAltitude { get; set; }

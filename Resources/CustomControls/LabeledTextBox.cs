@@ -1,4 +1,10 @@
-﻿using System.Windows;
+﻿/* File: LabeledTextBox.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: A conrete implementation of <LabeledControl> that contains a <TextBox> and custom properties.
+ */
+
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Controls;

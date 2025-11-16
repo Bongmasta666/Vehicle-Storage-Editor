@@ -1,4 +1,9 @@
-﻿using System;
+﻿/* File: LabeledSelector.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: A conrete implementation of <LabeledControl> that contains a <Combobox> and custom properties.
+ */
+
 using System.Windows;
 using System.Collections;
 using System.Windows.Data;
