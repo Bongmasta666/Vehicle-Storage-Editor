@@ -57,7 +57,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return false;
         }
 
-        public void LoadFromData(StorageData data)
+        public void LoadFromData(StorageData data) //Doing all this here is probably not for the best
         {
             Vehicles = [];
             Name = data.Name;

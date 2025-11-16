@@ -53,6 +53,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
             statusBar.StartSystemClock();
             UpdateDebugPage();
+
         }
 
         private void RebuildProperties()
@@ -261,13 +262,6 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        private static LabeledSelector BuildSelector(string name, IEnumerable list)
-        {
-            LabeledSelector s = new() { LabelContent = name };
-            s.SetItemSource(list);
-            return s;
-        }
-
         //Kind rough but should handle everything atm. Being able to pass the numeric value would be optimal.
         private static bool ValidateTextBox(LabeledTextBox textBox)
         {
@@ -283,7 +277,6 @@ namespace Bongs_Vehicle_Viewer_V2
             return true;
         }
 
-        //Will probably need some work but should work for now.
         private static void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
         {
             foreach (var item in fieldDict)
@@ -305,15 +298,10 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void TryOpenAndLoad()
         {
-            var dialog = new OpenFileDialog
-            {
-                Filter = "Json Files (*.json)| *.json",
-                InitialDirectory = SavePath,
-            };
-
+            OpenFileDialog dialog = new(){ InitialDirectory = SavePath, Filter = "Json Files (*.json)| *.json", };
             if (dialog.ShowDialog(this) == true)            
             {   
-                try //This has been helpful twice in personal testing.. Add more to other functions dumbass..
+                try
                 {      
                     StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(dialog.FileName);
                     if (Storage == null)
@@ -328,22 +316,36 @@ namespace Bongs_Vehicle_Viewer_V2
                     FileName = dialog.SafeFileName;
 
                     nameTracker.IsEnabled = true;
-                    LogSystemInfo($"{FileName} Was Loaded Successfully");
                     UpdateDebugPage();
                     RefreshUI();
+                    LogSystemInfo($"{FileName} Was Loaded Successfully");
                 }
                 catch (Exception ex){ LogSystemInfo(ex.Message); }
             }
         }
 
+        //This is not automatic anymore. Consider setting a flag and possibly prompting user.
+        private void SaveToJson()
+        {
+            if (FileName == null) TrySaveAs(); //Be Wary of infinite loop.
+            else if (FileName != null && Storage != null)
+            {
+                try
+                {
+                    StorageData data = Storage.GetSaveData();
+                    string path = Path.Combine(SavePath, FileName);
+                    MyFriendJson.SaveThisPlease(data, path);
+
+                    UpdateDebugPage();  //Maybe do something with these
+                    LogSystemInfo($"Vehicles saved to {FileName}");
+                }
+                catch (Exception ex) { LogSystemInfo(ex.Message); }
+            }
+        }
+
         private void TrySaveAs()
         {
-            SaveFileDialog dialog = new()
-            {
-                Filter = "Json Files (*.json)| *.json",
-                FileName = FileName ?? "NewFile.json", //Default file name might have to be dynamic
-            };
-
+            SaveFileDialog dialog = new() { FileName = FileName ?? "NewFile.json", Filter = "Json Files (*.json)| *.json" };
             if (dialog.ShowDialog(this) == true) 
             {
                 FileName = dialog.SafeFileName;
@@ -352,31 +354,16 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        //This is not automatic anymore. Consider setting a flag and possibly prompting user. Also ERROR HANDLING!!
-        //This should probably trigger SaveAs function though. Be Wary of infinite loop.
-        private void SaveToJson() 
-        {
-            if (Storage != null && FileName != null) //These might be good for now. 
-            {
-                StorageData data = Storage.GetSaveData();
-                string path = Path.Combine(SavePath, FileName);
-                MyFriendJson.SaveThisPlease(data, path);
-
-                UpdateDebugPage();  //Maybe do something with these
-                LogSystemInfo($"Vehicles saved to {FileName}");
-            }
-        }
-
-        //There was and issue seeing the new storage values in datagrid
         private void NewStorage()
         {
             if (Storage != null) { Unsubscribe(Storage); }
 
-            FileName = "NewStorage.json";
-            Storage = new("New Storage");
+            FileName = "NewStorage.json"; // This seems weird here after adding below..
+            Storage = new("New Storage"); // But than again theses have always been stinky
             Subscribe(Storage);
 
             nameTracker.IsEnabled = true;
+            LogSystemInfo($"Created New Storage {FileName}");
             UpdateDebugPage();
             RefreshUI();
         }
@@ -420,6 +407,13 @@ namespace Bongs_Vehicle_Viewer_V2
             KeyBinding keyBind = new() { Command = command, Key = key, Modifiers = mod };
             control.CommandBindings.Add(comBind);
             control.InputBindings.Add(keyBind);
+        }
+
+        private static LabeledSelector BuildSelector(string name, IEnumerable list)
+        {
+            LabeledSelector s = new() { LabelContent = name };
+            s.SetItemSource(list);
+            return s;
         }
     }
 }
