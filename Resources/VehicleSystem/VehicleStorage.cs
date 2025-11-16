@@ -5,7 +5,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
     public class VehicleStorage
     {
         public string Name { get; set; } = "";
-        public Dictionary<int, Vehicle> Vehicles { get; } = [];
+        public Dictionary<int, Vehicle> Vehicles { get; private set; } = [];
 
         public double TotalValue { get; private set; } = 0.0;
         public int MotorizedVehicles { get; private set; } = 0;
@@ -59,16 +59,21 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         public void LoadFromData(StorageData data)
         {
+            Vehicles = [];
             Name = data.Name;
-            foreach (Vehicle v in data.List)
-            {
-                Vehicles.Add(v.ID, v);
-                TallyVehicle(v);
-            }
+            VehicleFactory.ResetUID();
 
-            //Maybe Abstract
-            int VehicleUid = Vehicles.OrderBy(v => v.Value.ID).Last().Value.ID + 1;
-            VehicleFactory.SetVehicleUID(VehicleUid);
+            if (data.List.Count > 0)
+            {
+                foreach (Vehicle v in data.List)
+                {
+                    Vehicles.Add(v.ID, v);
+                    TallyVehicle(v);
+                }
+
+                int VehicleUid = Vehicles.OrderBy(v => v.Value.ID).Last().Value.ID;
+                VehicleFactory.SetVehicleUID(VehicleUid + 1);
+            }
         }
 
         //String literals suck. Maybe Just compare type with typeof or make enum.

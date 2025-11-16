@@ -68,7 +68,7 @@
                             </Grid>
                         </ScrollViewer>
                     </Grid>
-                  
+
                     <Grid Grid.Column="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -90,7 +90,6 @@
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
-                   
 
                     <Grid Grid.Row="1" Grid.ColumnSpan="2">
                         <Grid.ColumnDefinitions>
@@ -134,7 +133,7 @@
                         <Separator/>
                     </StackPanel>
               
-                    <TextBlock Grid.Row="1" Background="Black" Foreground="Lime" Height="320" Margin="4" Padding="6" Text="Booting..."/>
+                    <TextBlock x:Name="debugOutput" Grid.Row="1" Background="Black" Foreground="Lime" Height="320" Margin="4" Padding="6" Text=""/>
                 </Grid>
             </TabItem>
         </TabControl>

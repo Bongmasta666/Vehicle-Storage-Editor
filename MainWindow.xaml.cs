@@ -100,15 +100,16 @@ namespace Bongs_Vehicle_Viewer_V2
                 if (IsEditing && Selected != null)
                 {
                     v.ID = Selected.ID;
-                    if (!Storage.TryEditVehicle(v)) { statusBar.DisplaySystemMessage("FAILED TO EDIT OLD VEHICLE"); return; }
+                    if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
                 }
                 else //Do Something about storage warnings here
                 {
                     v.ID = VehicleFactory.GetVehicleUID();
-                    if (!Storage.TryAddVehicle(v)) { statusBar.DisplaySystemMessage("FAILED TO ADD NEW VEHICLE"); return; }
+                    if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
                 }
-
+        
                 ResetFields();
+                RefreshUI();
             }
         }
 
@@ -135,29 +136,28 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Storage != null && Selected != null)
             {
-                if (!Storage.TryRemoveVehicle(Selected.ID)) { statusBar.DisplaySystemMessage("FAILED TO REMOVE VEHICLE"); }
+                if (!Storage.TryRemoveVehicle(Selected.ID)) { LogSystemInfo("FAILED TO REMOVE VEHICLE"); }
             }
         }
 
         private void OnVehicleAdded(object? obj, EventArgs args)
         {
+            LogSystemInfo("Vehicle Added Successfully");
             RefreshUI();
-            statusBar.DisplaySystemMessage("Vehicle Added Succesfully");
         }
 
         private void OnVehicleUpdated(object? obj, EventArgs args)
         {
+            LogSystemInfo("Vehicle Updated Successfully");
             RefreshUI();
             UnselectItem();
-            tabControl.SelectedIndex = 1;
-            statusBar.DisplaySystemMessage("Vehicle Updated Successfully");
         }
 
         private void OnVehicleRemoved(object? obj, EventArgs args)
         {
+            LogSystemInfo("Vehicle Removed Successfully");
             RefreshUI();
             UnselectItem();
-            statusBar.DisplaySystemMessage("Vehicle Removed Successfully");
         }
 
         private void RefreshUI()
@@ -205,9 +205,15 @@ namespace Bongs_Vehicle_Viewer_V2
             propertyScrollBar.Value = args.VerticalOffset;
         }
 
+        private void LogSystemInfo(string message)
+        {
+            debugOutput.Text += $"[{statusBar.TimeShowing}] {message}\n";
+            statusBar.DisplaySystemMessage(message);
+        }
+
         private void UpdateStatsPage(VehicleStorage storage)
         {
-            nameTracker.Text = $"{storage.Name}"; //This could probably be seperate and called when needed
+            nameTracker.Text = $"{storage.Name}"; //This is linked to the textbox for storage name
             totalTracker.Content = $"Total Vehicles: {storage.Vehicles.Count}";
             priceTracker.Content = $"Total Price: {storage.TotalValue:C}";
             motorizedTracker.Content = $"Motorized Vehicles: {storage.MotorizedVehicles}";
@@ -307,18 +313,26 @@ namespace Bongs_Vehicle_Viewer_V2
 
             if (dialog.ShowDialog(this) == true)            
             {   
-                try // Might as well start trying
+                try //This has been helpful twice in personal testing.. Add more to other functions dumbass..
                 {      
                     StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(dialog.FileName);
-                    Storage ??= new(data.Name); //Intellisense suggests: Compound assigment .. Guessing its a null assigment operator. Look into this
+                    if (Storage == null)
+                    {
+                        Storage = new(data.Name);
+                        Subscribe(Storage);
+                    }
+
                     Storage.LoadFromData(data);
-                    LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName; //?null check operator fixed intellisense highlighting. I wonder why.
+
+                    LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
                     FileName = dialog.SafeFileName;
+
                     nameTracker.IsEnabled = true;
+                    LogSystemInfo($"{FileName} Was Loaded Successfully");
                     UpdateDebugPage();
                     RefreshUI();
                 }
-                catch (Exception ex){ statusBar.DisplaySystemMessage(ex.Message); }
+                catch (Exception ex){ LogSystemInfo(ex.Message); }
             }
         }
 
@@ -349,28 +363,36 @@ namespace Bongs_Vehicle_Viewer_V2
                 MyFriendJson.SaveThisPlease(data, path);
 
                 UpdateDebugPage();  //Maybe do something with these
-                statusBar.DisplaySystemMessage("Vehicles Saved To Json File");
+                LogSystemInfo($"Vehicles saved to {FileName}");
             }
         }
 
-        //If the user makes a new file .. something something.. Filename, Path, Directory.. Save
+        //There was and issue seeing the new storage values in datagrid
         private void NewStorage()
         {
-            if (Storage != null) // I dunno, seems right.
-            {
-                Storage.VehicleAdded -= OnVehicleAdded;
-                Storage.VehicleUpdated -= OnVehicleUpdated;
-                Storage.VehicleRemoved -= OnVehicleRemoved;
-            }
+            if (Storage != null) { Unsubscribe(Storage); }
 
             FileName = "NewStorage.json";
             Storage = new("New Storage");
-            Storage.VehicleAdded += OnVehicleAdded;
-            Storage.VehicleUpdated += OnVehicleUpdated;
-            Storage.VehicleRemoved += OnVehicleRemoved;
+            Subscribe(Storage);
+
             nameTracker.IsEnabled = true;
             UpdateDebugPage();
             RefreshUI();
+        }
+
+        private void Subscribe(VehicleStorage storage)
+        {
+            storage.VehicleAdded += OnVehicleAdded;
+            storage.VehicleUpdated += OnVehicleUpdated;
+            storage.VehicleRemoved += OnVehicleRemoved;
+        }
+
+        private void Unsubscribe(VehicleStorage storage)
+        {
+            storage.VehicleAdded -= OnVehicleAdded;
+            storage.VehicleUpdated -= OnVehicleUpdated;
+            storage.VehicleRemoved -= OnVehicleRemoved;
         }
 
         private void OnStorageNameChange(object obj, KeyEventArgs args) 
@@ -378,7 +400,7 @@ namespace Bongs_Vehicle_Viewer_V2
             if (args.Key == Key.Enter && Storage != null)
             { 
                 Storage.Name = nameTracker.Text;
-                dataGrid.Focus(); // Kinda works
+                dataGrid.Focus();
             }           
         }
 

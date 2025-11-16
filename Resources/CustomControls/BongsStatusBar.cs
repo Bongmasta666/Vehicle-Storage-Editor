@@ -4,6 +4,7 @@ using System.Windows.Threading;
 using System.Windows.Controls.Primitives;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Windows.Navigation;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
 {
@@ -13,6 +14,8 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
         private readonly Label timeLabel = new() { Content = "00:00:00", Padding = labelPadding };
         private readonly Label outputLabel = new() { Content = "System:", Padding = labelPadding };
 
+        public string TimeShowing => timeLabel.Content.ToString() ?? "00:00:00 AM";
+        
         public BongsStatusBar() 
         {
             StatusBarItem outputContainer = new()

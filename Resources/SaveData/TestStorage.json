@@ -2,16 +2,28 @@
   "Name": "Secret Storage",
   "List": [
     {
-      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
-      "Mileage": 100.0,
-      "Class": "Car",
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.aquatic.Submarine, Bongs_Vehicle_Viewer_V2",
+      "HullMaterial": 4,
+      "Class": "Submarine",
       "ID": 100200,
-      "Year": 2025,
-      "Make": "Test",
-      "Model": "saver",
-      "Price": 100.0,
+      "Year": 1979,
+      "Make": "U.S.S.",
+      "Model": "RedOctober",
+      "Price": 3700000.0,
+      "Condition": 3,
+      "FuelType": 1
+    },
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Truck, Bongs_Vehicle_Viewer_V2",
+      "Mileage": 2000.0,
+      "Class": "Truck",
+      "ID": 100201,
+      "Year": 2022,
+      "Make": "Tesla",
+      "Model": "Cybertruck",
+      "Price": 89000.0,
       "Condition": 0,
-      "FuelType": 0
+      "FuelType": 2
     }
   ]
 }

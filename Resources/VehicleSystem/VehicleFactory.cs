@@ -1,15 +1,15 @@
-﻿using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
-using System.Reflection;
-using System.Windows.Controls;
+﻿using System.Reflection;
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 {
     public static class VehicleFactory
     {
         public static readonly Dictionary<string, Type> TypeDictonary = GetTypeDictonary(typeof(Vehicle));
+        public const int DefaultUID = 100200;
 
         //Ordering by ID and getting higest value sucks. Probably save this.
-        private static int VehicleUid = 100200;
+        private static int VehicleUID = DefaultUID;
 
         public static Vehicle? NewVehicle(string type)
         {
@@ -25,6 +25,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return Assembly.GetExecutingAssembly().GetTypes()
                 .Where(t => classType.IsAssignableFrom(t) && t.IsAbstract == includeAbstract).ToDictionary(t => t.Name, t => t);
         }
+
         private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
 
         public static PropertyInfo[] GetExtendedProps(string className)
@@ -48,13 +49,14 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return years;
         }
 
-        public static int GetVehicleUID() { return VehicleUid++; }
+        public static int GetVehicleUID() { return VehicleUID++; }
+        public static void ResetUID() => VehicleUID = DefaultUID;
 
         public static bool SetVehicleUID(int value) 
         {
-            if (value >= VehicleUid)
+            if (value >= VehicleUID)
             {
-                VehicleUid = value;
+                VehicleUID = value;
                 return true;
             }
             return false;   
