@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows;
 using System.Windows.Data;
-using System.Windows.Media;
+using System.Windows.Controls;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
 {
@@ -29,7 +23,6 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
             {
                 FontSize = 14,
                 Padding = new Thickness(1, 1, 4, 1),   
-                FontWeight = FontWeights.SemiBold,
             };
 
             label.SetBinding(Label.ContentProperty, new Binding("LabelContent") { Source = this });
