@@ -11,6 +11,7 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Reflection;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
+using System.Diagnostics;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources
 {
@@ -38,14 +39,11 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
             return data;
         }
 
-        public static string WhereIsShouldISave()
+        public static string WhereAreMyResource()
         {
-            var targetDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location)?.Parent?.Parent;
-            if (targetDir != null)
-            {
-                return Path.Combine(targetDir.FullName, "Resources", "SaveData");
-            }
-            else { throw new DirectoryNotFoundException("Json Could not locate target directory"); }
+            var targetDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location)?.Parent?.Parent?.Parent;
+            if (targetDir != null) { return Path.Combine(targetDir.FullName, "Resources"); }
+            else { throw new DirectoryNotFoundException("Could not locate your resource directory"); }
         }
     }
 }

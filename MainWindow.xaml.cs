@@ -6,7 +6,6 @@
  */
 
 using Microsoft.Win32;
-using System.Collections;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -17,16 +16,21 @@ using Bongs_Vehicle_Viewer_V2.Resources;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
+using System.Windows.Media.Imaging;
 using System.Diagnostics;
+
 
 namespace Bongs_Vehicle_Viewer_V2
 {
     public partial class MainWindow : Window
     {
-        public static string? FileName { get; private set; }
-        public static string DefaultPath => MyFriendJson.WhereIsShouldISave();
+        public static readonly string ResourcesDir = MyFriendJson.WhereAreMyResource();
+        public static readonly string ImagesDir = Path.Combine(ResourcesDir, "Images");
+        public static readonly string DefaultSaveDir = Path.Combine(ResourcesDir, "SaveData");
+
+        private static string SavePath => string.IsNullOrEmpty(LastKnownPath) ? DefaultSaveDir : LastKnownPath;
         public static string? LastKnownPath { get; private set; }
-        private static string SavePath => string.IsNullOrEmpty(LastKnownPath) ? DefaultPath : LastKnownPath;
+        public static string? FileName { get; private set; }
 
         public VehicleStorage? Storage { get; private set; }
         public Vehicle? Selected { get; private set; }
@@ -37,6 +41,9 @@ namespace Bongs_Vehicle_Viewer_V2
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 50, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
+        public static readonly BitmapImage bgImg = 
+            ControlTools.GetImageFromURI(Path.Combine(ImagesDir, "AbstractAIArt.png"), UriKind.RelativeOrAbsolute);
+
         ColorScheme standardScheme = new(){ Name="Standard", BGC = Brushes.White, FGC = Brushes.Black};
         ColorScheme matrixScheme = new(){ Name="Matrix", BGC = Brushes.Black, FGC = Brushes.Lime };
         ColorScheme neonScheme = new() { Name = "Neon", BGC = Brushes.Indigo, FGC = Brushes.Aqua };
@@ -45,11 +52,11 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             InitializeComponent();
 
-            AddKeyBinding(this, Key.N, ModifierKeys.Control, OnNewBtnPress);
-            AddKeyBinding(this, Key.O, ModifierKeys.Control, OnOpenBtnPress);
-            AddKeyBinding(this, Key.S, ModifierKeys.Control, OnSaveBtnPress);
-            AddKeyBinding(this, Key.E, ModifierKeys.Control, OnSaveAsBtnPress);
-            AddKeyBinding(this, Key.X, ModifierKeys.Control, OnExitBtnPress);
+            ControlTools.AddKeyBinding(this, Key.N, ModifierKeys.Control, OnNewBtnPress);
+            ControlTools.AddKeyBinding(this, Key.O, ModifierKeys.Control, OnOpenBtnPress);
+            ControlTools.AddKeyBinding(this, Key.S, ModifierKeys.Control, OnSaveBtnPress);
+            ControlTools.AddKeyBinding(this, Key.E, ModifierKeys.Control, OnSaveAsBtnPress);
+            ControlTools.AddKeyBinding(this, Key.X, ModifierKeys.Control, OnExitBtnPress);
 
             VehicleFields.Add("Make", makeTextBox);
             VehicleFields.Add("Model", modelTextBox);
@@ -62,6 +69,7 @@ namespace Bongs_Vehicle_Viewer_V2
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
 
+            rootGrid.Background = new ImageBrush(bgImg);
             statusBar.StartSystemClock();
             UpdateDebugPage();
         }
@@ -78,7 +86,7 @@ namespace Bongs_Vehicle_Viewer_V2
                 LabeledControl? newControl;
 
                 if (item.Name == "ID") { continue; }
-                else if (type.IsEnum) { newControl = BuildSelector(item.Name, Enum.GetValues(type)); }
+                else if (type.IsEnum) { newControl = ControlTools.NewSelector(item.Name, Enum.GetValues(type)); }
                 else { newControl = new LabeledTextBox() { LabelContent = item.Name }; }
 
                 AddToPropertyGrid(newControl);
@@ -265,7 +273,7 @@ namespace Bongs_Vehicle_Viewer_V2
             {
                 if (item.Value is LabeledTextBox lt)
                 {
-                    if (!ValidateTextBox(lt)) { log += $"{item.Key} Is Empty Or Invalid\n"; }
+                    if (!ControlTools.ValidateTextBox(lt)) { log += $"{item.Key} Is Empty Or Invalid\n"; }
                 }
             }return log;
         }
@@ -277,21 +285,6 @@ namespace Bongs_Vehicle_Viewer_V2
                 if (item is LabeledSelector ls) { ls.ItemIndex = 0; }
                 else if (item is LabeledTextBox lt) { lt.Reset(); }
             }
-        }
-
-        //Kind rough but should handle everything atm. Being able to pass the numeric value would be optimal.
-        private static bool ValidateTextBox(LabeledTextBox textBox)
-        {
-            if (textBox.IsNullOrEmpty(true)) { return false; }
-            if (textBox.IsNumericField)
-            {
-                if (double.TryParse(textBox.TextContent, out double value))
-                {
-                    if (value < 0) { textBox.HighLight(); return false; }
-                }
-                else { return false; }
-            }
-            return true;
         }
 
         //If we want to display errors either make non-static or some way to communicate with statusbar 
@@ -437,6 +430,22 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
+        private void OnColorChange(object obj, RoutedEventArgs args)
+        {
+            if (dataGrid != null)
+            {
+                RadioButton rbtn = (RadioButton)obj;
+                SolidColorBrush brush = new SolidColorBrush();
+                switch (rbtn.Content) // For now till im more awake and can figure out how to get the color from enum or something
+                {
+                    case "White": brush = Brushes.GhostWhite; break;
+                    case "Black": brush = Brushes.Black; break;
+                    case "Green": brush = Brushes.Green; break;
+                }
+                dataGrid.Background = brush;
+            }
+        }
+
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetFields();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
@@ -445,22 +454,6 @@ namespace Bongs_Vehicle_Viewer_V2
         private void OnSaveAsBtnPress(object obj, RoutedEventArgs args) => TrySaveAs();
         private void OnOpenBtnPress(object obj, RoutedEventArgs args) => TryOpenAndLoad();
         private void OnExitBtnPress(object obj, RoutedEventArgs args) => Close();
-
-        private static void AddKeyBinding(UIElement control, Key key, ModifierKeys mod, ExecutedRoutedEventHandler callback)
-        {
-            RoutedCommand command = new();
-            CommandBinding comBind = new(command, callback);
-            KeyBinding keyBind = new() { Command = command, Key = key, Modifiers = mod };
-            control.CommandBindings.Add(comBind);
-            control.InputBindings.Add(keyBind);
-        }
-
-        private static LabeledSelector BuildSelector(string name, IEnumerable list)
-        {
-            LabeledSelector s = new() { LabelContent = name };
-            s.SetItemSource(list);
-            return s;
-        }
     }
 
     public struct ColorScheme()

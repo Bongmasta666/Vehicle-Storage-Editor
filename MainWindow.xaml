@@ -26,15 +26,20 @@
             </MenuItem>
 
             <MenuItem Header="Options">
-                <MenuItem x:Name="optionsMenu" Header="Debug Theme" StaysOpenOnClick="False">
+                <MenuItem Header="Table Background" StaysOpenOnClick="False">
+                    <RadioButton Content="White" GroupName="tableColorBtns" IsChecked="True" Checked="OnColorChange"/>
+                    <RadioButton Content="Black" GroupName="tableColorBtns" IsChecked="False" Checked="OnColorChange"/>
+                    <RadioButton Content="Green" GroupName="tableColorBtns" IsChecked="False" Checked="OnColorChange"/>
+                </MenuItem>
+                <MenuItem Header="Debug Theme" StaysOpenOnClick="False">
                     <RadioButton Content="Standard" GroupName="dBugThemeBtns" IsChecked="False" Checked="OnDebugThemeChange"/>
                     <RadioButton Content="Matrix" GroupName="dBugThemeBtns" IsChecked="True" Checked="OnDebugThemeChange"/>
                     <RadioButton Content="Neon" GroupName="dBugThemeBtns" IsChecked="False" Checked="OnDebugThemeChange"/>
-                </MenuItem>
+                </MenuItem>     
             </MenuItem>
         </Menu>
         
-        <TabControl x:Name="tabControl" Grid.Row="1" Margin="2">
+        <TabControl x:Name="tabControl" Grid.Row="1" Margin="4">
             <TabItem Header="Vehicles">
                 <Grid Background="WhiteSmoke">
                     <Grid.RowDefinitions>
@@ -139,8 +144,9 @@
                         <Label x:Name="directoryTracker" Content="Save Directory: "/>
                         <Separator/>
                     </StackPanel>
-              
-                    <TextBlock x:Name="debugOutput" Grid.Row="1" Background="Black" Foreground="Lime" Height="320" Margin="4" Padding="6" Text=""/>
+                    <ScrollViewer Grid.Row="1">
+                        <TextBlock x:Name="debugOutput" Background="Black" Foreground="Lime" Margin="4" Padding="6" Text="" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    </ScrollViewer>
                 </Grid>
             </TabItem>
         </TabControl>
