@@ -76,12 +76,13 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             }
         }
 
-        //String literals suck. Maybe Just compare type with typeof or make enum.
+        //String literals suck. Maybe Just compare type with typeof or reflection library
         private void TallyVehicle(Vehicle vehicle, bool remove = false)
         {
             TotalValue += (remove) ? -vehicle.Price : vehicle.Price;
             int value = (remove) ? -1 : 1;
-            switch (vehicle.GetType().BaseType.Name) // This can maybe be abstracted
+            string type = vehicle.GetType().BaseType?.Name ?? "";
+            switch (type) 
             {
                 case "AerialVehicle": AerialVehicles += value; break;
                 case "AquaticVehicle": AquaticVehicles += value; break;
@@ -90,7 +91,6 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             }
         }
 
-        //Here if needed
         public double GetTotalPrice()
         {
             double total = 0.0;

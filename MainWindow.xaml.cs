@@ -1,15 +1,16 @@
-﻿using Microsoft.Win32;
-using System.IO;
-using System.Windows;
-using System.Reflection;
-using System.Collections;
-using System.Windows.Controls;
-using System.Windows.Input;
-using Bongs_Vehicle_Viewer_V2.Resources;
+﻿using Bongs_Vehicle_Viewer_V2.Resources;
 using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
+using Microsoft.Win32;
+using System.Collections;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace Bongs_Vehicle_Viewer_V2
 {
@@ -28,6 +29,10 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 50, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
+
+        ColorScheme standardScheme = new(){ Name="Standard", BGC = Brushes.White, FGC = Brushes.Black};
+        ColorScheme matrixScheme = new(){ Name="Matrix", BGC = Brushes.Black, FGC = Brushes.Lime };
+        ColorScheme neonScheme = new() { Name = "Neon", BGC = Brushes.Indigo, FGC = Brushes.Aqua };
 
         public MainWindow()
         {
@@ -399,6 +404,32 @@ namespace Bongs_Vehicle_Viewer_V2
             }           
         }
 
+        //Saving to prefs or just save folder doesnt hurt
+        private void OnDebugThemeChange(object obj, RoutedEventArgs args)
+        {
+            if (debugOutput != null)
+            {
+                RadioButton rbtn = (RadioButton)obj;
+                switch (rbtn.Content)
+                {
+                    //Needs a SetTheme function for sure
+                    case "Standard":
+                        debugOutput.Background = standardScheme.BGC;
+                        debugOutput.Foreground = standardScheme.FGC;
+                        break;
+                    case "Matrix":
+                        debugOutput.Background = matrixScheme.BGC;
+                        debugOutput.Foreground = matrixScheme.FGC;
+                        break;
+                    case "Neon":
+                        debugOutput.Background = neonScheme.BGC;
+                        debugOutput.Foreground = neonScheme.FGC;
+                        break;
+                }
+                tabControl.SelectedIndex = 2;
+            }
+        }
+
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetFields();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
@@ -423,5 +454,12 @@ namespace Bongs_Vehicle_Viewer_V2
             s.SetItemSource(list);
             return s;
         }
+    }
+
+    public struct ColorScheme()
+    {
+        public string Name { get; set; } = "Standard";
+        public Brush BGC { get; set; } = Brushes.White;
+        public Brush FGC { get; set; } = Brushes.Black;
     }
 }

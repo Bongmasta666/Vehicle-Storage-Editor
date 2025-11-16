@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Windows.Media;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
@@ -28,10 +29,10 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         private static BindingFlags PropertyFlags => BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
 
-        public static PropertyInfo[] GetExtendedProps(string className)
+        public static PropertyInfo[]? GetExtendedProps(string className)
         {
-            Type type = TypeDictonary[className];
-            return type.BaseType.GetProperties(PropertyFlags);
+            Type? type = TypeDictonary[className].BaseType;
+            return type?.GetProperties(PropertyFlags) ?? null;
         }
 
         public static List<string> GetClassNames()
