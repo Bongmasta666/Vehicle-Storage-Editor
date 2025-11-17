@@ -237,6 +237,7 @@ namespace Bongs_Vehicle_Viewer_V2
             aquaticTracker.Content = $"Aquatic Vehicles: {storage.AquaticVehicles}";
             totalTracker.Content = $"Total Vehicles: {storage.Vehicles.Count}";
             priceTracker.Content = $"Total Value: {storage.TotalPrice:C}";
+            milesTracker.Content = $"Total Miles: {storage.TotalMiles}";
         }
 
         private void UpdateDebugPage()

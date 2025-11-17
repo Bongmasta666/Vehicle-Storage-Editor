@@ -97,9 +97,17 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             string? type = vehicle.GetType().BaseType?.Name ?? "";
             switch (type)
             {
-                case "AerialVehicle": AerialVehicles += step; break;
-                case "AquaticVehicle": AquaticVehicles += step; break;
-                case "MotorizedVehicle": MotorizedVehicles += step; break;
+                case "AerialVehicle":
+                    AerialVehicles += step;
+                    break;
+                case "AquaticVehicle": 
+                    AquaticVehicles += step; 
+                    break;
+                case "MotorizedVehicle": 
+                    MotorizedVehicles += step;
+                    var v = (MotorizedVehicle)vehicle;
+                    TotalMiles += (v.Mileage * step);
+                    break;
                 default: break;
             }
         }

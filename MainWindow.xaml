@@ -151,8 +151,8 @@
                         <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>
                         <Label x:Name="aerialTracker" Content="Aerial Vehicles: 0"/>
                         <Label x:Name="totalTracker" Content="Total Vehicles: 0"/>
-                        <Label x:Name="milesTracker" Content="Total Miles: 0"/>
                         <Label x:Name="priceTracker" Content="Total Price: 0"/>
+                        <Label x:Name="milesTracker" Content="Total Miles: 0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
