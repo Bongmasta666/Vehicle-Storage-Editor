@@ -23,10 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\SaveData\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Resource Include="Resources\Images\Abstract_AI_Art.png" />
     <Resource Include="Resources\Images\Icons\Car_Sport.png" />
     <Resource Include="Resources\Images\Icons\Door.png" />

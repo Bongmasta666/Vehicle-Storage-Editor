@@ -5,6 +5,10 @@
  * This file is the root of the application and contains code for the Main Window and marjority of the UI functionality
  */
 
+using Bongs_Vehicle_Viewer_V2.Resources;
+using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using Microsoft.Win32;
 using System.IO;
 using System.Reflection;
@@ -12,12 +16,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Bongs_Vehicle_Viewer_V2.Resources;
-using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using System.Windows.Media.Imaging;
-using System.Diagnostics;
 
 
 namespace Bongs_Vehicle_Viewer_V2
@@ -28,9 +27,9 @@ namespace Bongs_Vehicle_Viewer_V2
         public static readonly string ImagesDir = Path.Combine(ResourcesDir, "Images");
         public static readonly string DefaultSaveDir = Path.Combine(ResourcesDir, "SaveData");
 
-        private static string SavePath => string.IsNullOrEmpty(LastKnownPath) ? DefaultSaveDir : LastKnownPath;
-        public static string? LastKnownPath { get; private set; }
         public static string? FileName { get; private set; }
+        public static string? LastKnownPath { get; private set; }
+        private static string SavePath => string.IsNullOrEmpty(LastKnownPath) ? DefaultSaveDir : LastKnownPath;
 
         public VehicleStorage? Storage { get; private set; }
         public Vehicle? Selected { get; private set; }
@@ -135,7 +134,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     ResetFields();
                     RefreshUI();
                 }
-            } else { LogSystemInfo("NO VEHICLE STORAGE FOUND!"); }
+            } else { LogSystemInfo("No Storage Currently Loaded."); }
         }
 
         private void OnVehicleSelected(object obj, RoutedEventArgs args)
@@ -203,6 +202,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         public void ResetFields()
         {
+            searchBar.Text = ""; // Here or down There. It's Up in the Air.
             yearSelector.ItemIndex = 0;
             submitBtn.Content = "Submit";
             ResetFieldValues(VehicleFields);
@@ -228,6 +228,34 @@ namespace Bongs_Vehicle_Viewer_V2
             propertyScrollBar.Value = args.VerticalOffset;
         }
 
+        //Pretty limited right now and need better handling. For nnow it does the trick.
+        private void OnSearchBarSubmit(object obj, KeyEventArgs args)
+        {
+            if (args.Key == Key.Enter )
+            {
+                string input = searchBar.Text.Trim();
+                searchBar.Text = "";
+                if (Storage != null)
+                {               
+                    if (!string.IsNullOrEmpty(input))
+                    {
+                        try
+                        {
+                            int value = int.Parse(input);
+                            if (Storage.Vehicles.TryGetValue(value, out Vehicle? car))
+                            {
+                                LogSystemInfo("Vehicle Match Found");
+                                dataGrid.SelectedItem = car;
+                                dataGrid.ScrollIntoView(value);
+                                dataGrid.Focus();
+                            }                
+                        }
+                        catch (Exception ex) { LogSystemInfo(ex.Message); }
+                    }
+                } else { LogSystemInfo("No Storage Currently Loaded."); }
+            } 
+        }
+
         private void UpdateStatsPage(VehicleStorage storage)
         {
             nameInput.Text = $"{storage.Name}"; //This is linked to the textbox for storage name
@@ -241,8 +269,7 @@ namespace Bongs_Vehicle_Viewer_V2
         }
 
         private void UpdateDebugPage()
-        {
-            //Trimming the path a bit might be nice
+        {       
             directoryTracker.Content = $"Save Directory: {SavePath ?? "Undefined"}";
             filenameTracker.Content = $"File Name: {FileName ?? "Undefined"}";
         }
@@ -350,6 +377,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     string path = Path.Combine(SavePath, FileName);
                     MyFriendJson.SaveThisPlease(data, path);
                     storageTracker.Content = $"Storage: {Storage.Name}";
+                    fileSaveTracker.Content = $"Last Save {statusBar.TimeShowing}";
                     LogSystemInfo($"Vehicles saved to {FileName}");
                     UpdateDebugPage();
                 }

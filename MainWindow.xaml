@@ -77,9 +77,9 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <ScrollBar x:Name="propertyScrollBar" Grid.Column="0" HorizontalAlignment="Left" Visibility="Visible" ValueChanged="OnPropScrollValueChange"/>
-                        <ScrollViewer x:Name="propertyScrollView" Grid.Column="1" VerticalScrollBarVisibility="Hidden" ScrollChanged="OnPropScrollChanged">
-                            <Grid x:Name="propertyGrid" Margin="6" Width="120" HorizontalAlignment="Left">
+                        <ScrollBar x:Name="propertyScrollBar" Grid.Column="0" MinWidth="0" Width="12" HorizontalAlignment="Left" Visibility="Visible" ValueChanged="OnPropScrollValueChange"/>
+                        <ScrollViewer x:Name="propertyScrollView" Margin="4,8,4,4" Grid.Column="1" VerticalScrollBarVisibility="Hidden" ScrollChanged="OnPropScrollChanged">
+                            <Grid x:Name="propertyGrid" Width="128" HorizontalAlignment="Left">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -111,7 +111,7 @@
                             <Label Content="Storage:" Padding="3"/>
                             <TextBox x:Name="nameInput" Width="180" Margin="2" KeyDown="OnStorageNameChange" IsEnabled="False"/>
                         </StackPanel>
-                        <DataGrid x:Name="dataGrid" Grid.Row="1" Background="GhostWhite"  IsReadOnly="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
+                        <DataGrid x:Name="dataGrid" Grid.Row="1" Margin="2" Background="GhostWhite" IsReadOnly="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" MinWidth="64" Width="Auto" Binding="{Binding ID}"/>
                                 <DataGridTextColumn Header="Year" MinWidth="64" Width="Auto" Binding="{Binding Year}"/>
@@ -130,13 +130,14 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="2" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8,4" VerticalAlignment="Center">
                             <Button x:Name="submitBtn" Content="Submit" Width="64" Margin="4,2" FontSize="12" Click="OnSubmitBtnPress"/>
                             <Button x:Name="resetBtn" Content="Clear" Width="64" Margin="4,2" FontSize="12" Click="OnResetBtnPress"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="4" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <Button x:Name="removeBtn" Content="Remove" Width="64" Margin="4,1" FontSize="12" Click="OnRemoveBtnPress" IsEnabled="False"/>
+                            <TextBox x:Name="searchBar" MinWidth="140" Margin="6,0,6,0" Height="20" KeyDown="OnSearchBarSubmit"/>
                             <Button x:Name="unselectBtn" Content="Unselect" Width="64" Margin="4,1" FontSize="12" Click="OnUnselectBtnPress" IsEnabled="False"/>
                         </StackPanel>
                     </Grid>
@@ -144,16 +145,19 @@
             </TabItem>
             
             <TabItem Header="Statistics">
-                <Grid Background="#FFE5E5E5">
-                    <StackPanel>
-                        <Label x:Name="storageTracker" Content="Storage: Empty"/>
-                        <Label x:Name="motorizedTracker" Content="Motorized Vehicles: 0"/>
-                        <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>
-                        <Label x:Name="aerialTracker" Content="Aerial Vehicles: 0"/>
-                        <Label x:Name="totalTracker" Content="Total Vehicles: 0"/>
-                        <Label x:Name="priceTracker" Content="Total Price: 0"/>
-                        <Label x:Name="milesTracker" Content="Total Miles: 0"/>
-                    </StackPanel>
+                <Grid Background="WhiteSmoke">
+                    <Border BorderBrush="DarkGray" BorderThickness="2" HorizontalAlignment="Stretch" Background="WhiteSmoke">
+                        <StackPanel>
+                            <Label x:Name="storageTracker" Content="Storage: Empty"/>
+                            <Label x:Name="motorizedTracker" Content="Motorized Vehicles: 0"/>
+                            <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>
+                            <Label x:Name="aerialTracker" Content="Aerial Vehicles: 0"/>
+                            <Label x:Name="totalTracker" Content="Total Vehicles: 0"/>
+                            <Label x:Name="priceTracker" Content="Total Price: 0"/>
+                            <Label x:Name="milesTracker" Content="Total Miles: 0"/>
+                        </StackPanel>
+                    </Border>
+                   
                 </Grid>
             </TabItem>
             
@@ -164,9 +168,16 @@
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <StackPanel>
-                        <Label x:Name="filenameTracker" Content="File Name: None"/>
-                        <Label x:Name="directoryTracker" Content="Save Directory: "/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Label x:Name="filenameTracker" Content="File Name: None" Grid.Column="0"/>
+                            <Label x:Name="fileSaveTracker" Content="Last Save: 00:00:00 AM" Grid.Column="1"/>
+                        </Grid>
                         <Separator/>
+                        <Label x:Name="directoryTracker" Content="Save Directory: "/>
                     </StackPanel>
                     <ScrollViewer Grid.Row="1">
                         <TextBlock x:Name="debugOutput" Background="Black" Foreground="Lime" Margin="4" Padding="6" Text="" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
