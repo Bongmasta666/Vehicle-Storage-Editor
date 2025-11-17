@@ -71,6 +71,7 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.SetItemSource(ValidYears);
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
+            typeSelector.ItemIndex = 2; //Order Changes when adding new classes :/ Why? cause they suck.. might be based on folder order
 
             rootGrid.Background = new ImageBrush(bgImg);
             statusBar.StartSystemClock();

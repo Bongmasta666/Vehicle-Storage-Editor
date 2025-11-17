@@ -1,9 +1,11 @@
-﻿using System;
+﻿/* File: ControlTools.cs
+ * Author: Michael Millar
+ * Date: 16-11-2025
+ * Description: 
+ * A static utility class that contains control related functions.
+ */
+
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
