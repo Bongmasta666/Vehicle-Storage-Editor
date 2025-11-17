@@ -25,8 +25,8 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
         public int AerialVehicles { get; private set; } = 0;
         public int AquaticVehicles { get; private set; } = 0;
         public double TotalPrice { get; private set; } = 0.0;
+        public double TotalMiles { get; private set; } = 0.0;
         #endregion Statistic Variables
-
 
         public bool TryAddVehicle(Vehicle vehicle)
         {
@@ -68,6 +68,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         public void LoadFromData(StorageData data) //Doing all this here is probably not for the best
         {
+            ResetStats();
             Vehicles = [];
             Name = data.Name;
             VehicleFactory.ResetUID();
@@ -101,6 +102,15 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
                 case "MotorizedVehicle": MotorizedVehicles += step; break;
                 default: break;
             }
+        }
+
+        public void ResetStats()
+        {
+            MotorizedVehicles = 0;
+            AerialVehicles = 0;
+            AquaticVehicles = 0;
+            TotalPrice = 0.0;
+            TotalMiles = 0.0;
         }
 
         public double GetTotalPrice()

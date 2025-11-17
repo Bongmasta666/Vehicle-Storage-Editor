@@ -228,21 +228,15 @@ namespace Bongs_Vehicle_Viewer_V2
             propertyScrollBar.Value = args.VerticalOffset;
         }
 
-        private void LogSystemInfo(string message)
-        {
-            debugOutput.Text += $"[{statusBar.TimeShowing}] {message}\n";
-            statusBar.DisplaySystemMessage(message);
-        }
-
         private void UpdateStatsPage(VehicleStorage storage)
         {
-            nameTracker.Text = $"{storage.Name}"; //This is linked to the textbox for storage name
+            nameInput.Text = $"{storage.Name}"; //This is linked to the textbox for storage name
 
             motorizedTracker.Content = $"Motorized Vehicles: {storage.MotorizedVehicles}";
             aerialTracker.Content = $"Aerial Vehicles: {storage.AerialVehicles}";
             aquaticTracker.Content = $"Aquatic Vehicles: {storage.AquaticVehicles}";
             totalTracker.Content = $"Total Vehicles: {storage.Vehicles.Count}";
-            priceTracker.Content = $"Total Price: {storage.TotalPrice:C}";
+            priceTracker.Content = $"Total Value: {storage.TotalPrice:C}";
         }
 
         private void UpdateDebugPage()
@@ -330,13 +324,13 @@ namespace Bongs_Vehicle_Viewer_V2
                     }
 
                     Storage.LoadFromData(data);
-
                     LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
                     FileName = dialog.SafeFileName;
+                    nameInput.IsEnabled = true;
 
-                    nameTracker.IsEnabled = true;
-                    UpdateDebugPage();
                     RefreshUI();
+                    UpdateDebugPage();
+                    storageTracker.Content = $"Storage: {Storage.Name}";
                     LogSystemInfo($"{FileName} Was Loaded Successfully");
                 }
                 catch (Exception ex){ LogSystemInfo(ex.Message); }
@@ -354,8 +348,9 @@ namespace Bongs_Vehicle_Viewer_V2
                     StorageData data = Storage.GetSaveData();
                     string path = Path.Combine(SavePath, FileName);
                     MyFriendJson.SaveThisPlease(data, path);
-                    UpdateDebugPage();
+                    storageTracker.Content = $"Storage: {Storage.Name}";
                     LogSystemInfo($"Vehicles saved to {FileName}");
+                    UpdateDebugPage();
                 }
                 catch (Exception ex) { LogSystemInfo(ex.Message); }
             }
@@ -378,9 +373,10 @@ namespace Bongs_Vehicle_Viewer_V2
 
             FileName = "NewStorage.json"; // This seems weird here after adding below..
             Storage = new("New Storage"); // But than again theses have always been stinky
+            storageTracker.Content = $"Storage: {Storage.Name}";
+            nameInput.IsEnabled = true;
             Subscribe(Storage);
 
-            nameTracker.IsEnabled = true;
             LogSystemInfo($"Created New Storage {FileName}");
             UpdateDebugPage();
             RefreshUI();
@@ -402,17 +398,25 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnStorageNameChange(object obj, KeyEventArgs args) 
         { 
-            if (args.Key == Key.Enter && Storage != null)
-            { 
-                Storage.Name = nameTracker.Text;
+            if (args.Key == Key.Enter )
+            {
+                UpdateStorageName(nameInput.Text);
                 dataGrid.Focus();
             }           
         }
 
+        private void UpdateStorageName(string name)
+        {
+            if (Storage != null)
+            {
+                Storage.Name = name;
+                storageTracker.Content = $"Storage: {name}";
+            }
+        }
+
         //Saving to prefs or just save folder doesnt hurt
         private void OnDebugThemeChange(object obj, RoutedEventArgs args)
-        {
-            
+        {         
             RadioButton rbtn = (RadioButton)obj;
             switch (rbtn.Content)
             {
@@ -453,6 +457,12 @@ namespace Bongs_Vehicle_Viewer_V2
                 dataGrid.Background = brush;
                 tabControl.SelectedIndex = 2;
             }
+        }
+
+        private void LogSystemInfo(string message)
+        {
+            debugOutput.Text += $"[{statusBar.TimeShowing}] {message}\n";
+            statusBar.DisplaySystemMessage(message);
         }
 
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();

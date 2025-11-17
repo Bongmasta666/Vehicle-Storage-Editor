@@ -109,7 +109,7 @@
                         </Grid.RowDefinitions>
                         <StackPanel Grid.Row="0" Orientation="Horizontal">
                             <Label Content="Storage:" Padding="3"/>
-                            <TextBox x:Name="nameTracker" Width="180" Margin="2" KeyDown="OnStorageNameChange" IsEnabled="False"/>
+                            <TextBox x:Name="nameInput" Width="180" Margin="2" KeyDown="OnStorageNameChange" IsEnabled="False"/>
                         </StackPanel>
                         <DataGrid x:Name="dataGrid" Grid.Row="1" Background="GhostWhite"  IsReadOnly="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
                             <DataGrid.Columns>
@@ -146,10 +146,12 @@
             <TabItem Header="Statistics">
                 <Grid Background="#FFE5E5E5">
                     <StackPanel>
+                        <Label x:Name="storageTracker" Content="Storage: Empty"/>
                         <Label x:Name="motorizedTracker" Content="Motorized Vehicles: 0"/>
                         <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>
                         <Label x:Name="aerialTracker" Content="Aerial Vehicles: 0"/>
                         <Label x:Name="totalTracker" Content="Total Vehicles: 0"/>
+                        <Label x:Name="milesTracker" Content="Total Miles: 0"/>
                         <Label x:Name="priceTracker" Content="Total Price: 0"/>
                     </StackPanel>
                 </Grid>
