@@ -16,8 +16,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
         public static readonly Dictionary<string, Type> TypeDictonary = GetTypeDictonary(typeof(Vehicle));
         public const int DefaultUID = 100200;
 
-        //Ordering by ID and getting higest value sucks. Probably save this.
-        private static int VehicleUID = DefaultUID;
+        public static int VehicleUID { get; private set; } = DefaultUID;
 
         public static Vehicle? NewVehicle(string type)
         {
@@ -63,7 +62,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return years;
         }
 
-        public static int GetVehicleUID() { return VehicleUID++; }
+        public static int UseVehicleUID() { return VehicleUID++; }
         public static void ResetUID() => VehicleUID = DefaultUID;
 
         public static bool SetVehicleUID(int value) 

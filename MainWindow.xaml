@@ -78,7 +78,7 @@
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
                         <ScrollBar x:Name="propertyScrollBar" Grid.Column="0" MinWidth="0" Width="12" HorizontalAlignment="Left" Visibility="Visible" ValueChanged="OnPropScrollValueChange"/>
-                        <ScrollViewer x:Name="propertyScrollView" Margin="4,8,4,4" Grid.Column="1" VerticalScrollBarVisibility="Hidden" ScrollChanged="OnPropScrollChanged">
+                        <ScrollViewer x:Name="propertyScrollView" Height="320" Margin="4,8,4,4" Grid.Column="1" VerticalScrollBarVisibility="Hidden" ScrollChanged="OnPropScrollChanged">
                             <Grid x:Name="propertyGrid" Width="128" HorizontalAlignment="Left">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -101,16 +101,23 @@
                             </Grid>
                         </ScrollViewer>
                     </Grid>
-
+                    
                     <Grid Grid.Column="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Orientation="Horizontal">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
                             <Label Content="Storage:" Padding="3"/>
-                            <TextBox x:Name="nameInput" Width="180" Margin="2" KeyDown="OnStorageNameChange" IsEnabled="False"/>
-                        </StackPanel>
+                            <TextBox x:Name="nameInput" Grid.Column="1" Width="180" Margin="2" KeyDown="OnStorageNameChange" IsEnabled="False"/>
+                            <Label x:Name="vehicleIDLabel" Content="Next ID: 100200"  Grid.Column="2" HorizontalAlignment="Right"/>
+                        </Grid>
+
                         <DataGrid x:Name="dataGrid" Grid.Row="1" Margin="2" Background="GhostWhite" IsReadOnly="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" MinWidth="64" Width="Auto" Binding="{Binding ID}"/>
@@ -166,6 +173,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <StackPanel>
                         <Grid>
@@ -182,6 +190,9 @@
                     <ScrollViewer Grid.Row="1">
                         <TextBlock x:Name="debugOutput" Background="Black" Foreground="Lime" Margin="4" Padding="6" Text="" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                     </ScrollViewer>
+                    <Grid Grid.Row="2">
+                        <TextBox x:Name="debugInput" Margin="4,0,20,0" Text="" KeyDown="HandleDebugInput"/>
+                    </Grid>
                 </Grid>
             </TabItem>
         </TabControl>

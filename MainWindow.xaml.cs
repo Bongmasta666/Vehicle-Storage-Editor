@@ -10,7 +10,6 @@ using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using Microsoft.Win32;
-using System.DirectoryServices;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -39,7 +38,8 @@ namespace Bongs_Vehicle_Viewer_V2
         public Dictionary<string, LabeledControl> ExtendedFields { get; private set; } = [];
         public Dictionary<string, LabeledControl> ConcreteFields { get; private set; } = [];
 
-        private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 50, 2026);
+        private static readonly int yearMod = 100;
+        private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - yearMod, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
         public static readonly BitmapImage bgImg = 
@@ -83,28 +83,15 @@ namespace Bongs_Vehicle_Viewer_V2
         private void RebuildProperties()
         {
             extendedGrid.Children.Clear();
+
             PropertyInfo[] extended = VehicleFactory.GetExtendedProps(typeSelector.ItemName);
             ExtendedFields = BuildFromPropInfo(extended);
+            foreach (LabeledControl control in ExtendedFields.Values) { AddToPropertyGrid(control); }
+
             PropertyInfo[] concrete = VehicleFactory.GetConcreteProps(typeSelector.ItemName);
             ConcreteFields = BuildFromPropInfo(concrete);
-        }
-
-        private Dictionary<string, LabeledControl> BuildFromPropInfo(PropertyInfo[] propArray)
-        {
-            Dictionary<string, LabeledControl> dict = [];
-            foreach (PropertyInfo item in propArray)
-            {
-                LabeledControl? newControl;
-                Type type = item.PropertyType;
-
-                if (item.Name == "ID") { continue; }
-                else if (type.IsEnum) { newControl = ControlTools.NewSelector(item.Name, Enum.GetValues(type)); }
-                else { newControl = new LabeledTextBox() { LabelContent = item.Name }; }
-
-                AddToPropertyGrid(newControl);
-                dict.Add(item.Name, newControl);
-            }
-            return dict;
+            foreach (LabeledControl control in ConcreteFields.Values) { AddToPropertyGrid(control); }
+   
         }
 
         private void AddToPropertyGrid(LabeledControl control)
@@ -137,7 +124,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     }
                     else
                     {
-                        v.ID = VehicleFactory.GetVehicleUID();
+                        v.ID = VehicleFactory.UseVehicleUID();
                         if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
                     }
 
@@ -197,6 +184,7 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Storage != null)
             {
+                vehicleIDLabel.Content = $"Next ID: {VehicleFactory.VehicleUID}"; //Seems right
                 dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
                 UpdateStatsPage(Storage);
             }
@@ -206,8 +194,8 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             typeSelector.ItemIndex = classNames.IndexOf(vehicle.Class);
             yearSelector.ItemIndex = ValidYears.IndexOf(vehicle.Year);
-            PopulateFromDict(vehicle, VehicleFields);
-            PopulateFromDict(vehicle, ExtendedFields);
+            AssignValuesFromDict(vehicle, VehicleFields);
+            AssignValuesFromDict(vehicle, ExtendedFields);
         }
 
         public void ResetFields()
@@ -284,8 +272,24 @@ namespace Bongs_Vehicle_Viewer_V2
             filenameTracker.Content = $"File Name: {FileName ?? "Undefined"}";
         }
 
-        //If we want to display errors either make non-static or some way to communicate with statusbar 
-        public static void PopulateFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
+
+        public static Dictionary<string, LabeledControl> BuildFromPropInfo(PropertyInfo[] propArray)
+        {
+            Dictionary<string, LabeledControl> dict = [];
+            foreach (PropertyInfo item in propArray)
+            {
+                LabeledControl? newControl;
+                Type type = item.PropertyType;
+
+                if (item.Name == "ID") { continue; } // This here is proof something needs to be abstracted
+                else if (type.IsEnum) { newControl = ControlTools.NewSelector(item.Name, Enum.GetValues(type)); }
+                else { newControl = new LabeledTextBox() { LabelContent = item.Name }; }
+                dict.Add(item.Name, newControl);
+            }
+            return dict;
+        }
+
+        public static void AssignValuesFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
         {
             foreach (var item in fieldDict)
             {
@@ -415,6 +419,7 @@ namespace Bongs_Vehicle_Viewer_V2
             storageTracker.Content = $"Storage: {Storage.Name}";
             nameInput.IsEnabled = true;
             Subscribe(Storage);
+            VehicleFactory.ResetUID(); 
 
             LogSystemInfo($"Created New Storage {FileName}");
             UpdateDebugPage();
@@ -502,6 +507,24 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             debugOutput.Text += $"[{statusBar.TimeShowing}] {message}\n";
             statusBar.DisplaySystemMessage(message);
+        }
+
+        private void HandleDebugInput(object obj, KeyEventArgs args)
+        {
+            if (args.Key == Key.Enter)
+            {
+                string input = debugInput.Text.Trim().ToLower();
+                debugInput.Text = string.Empty;
+                if (!string.IsNullOrEmpty(input))
+                {
+                    switch (input) // I hate switches.. do something better
+                    {
+                        case "cls":
+                        case "clear": 
+                            debugOutput.Text = string.Empty; break;
+                    }
+                }
+            }
         }
 
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();

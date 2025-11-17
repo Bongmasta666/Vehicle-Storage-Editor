@@ -1,36 +1,13 @@
 {
   "Name": "Sample Storage",
+  "NextUID": 100210,
   "List": [
-    {
-      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Truck, Bongs_Vehicle_Viewer_V2",
-      "Mileage": 89000.0,
-      "Class": "Truck",
-      "ID": 100201,
-      "Year": 2021,
-      "Make": "Jeep",
-      "Model": "Cherokee",
-      "Price": 39000.0,
-      "Condition": 1,
-      "FuelType": 0
-    },
-    {
-      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
-      "Mileage": 300080.0,
-      "Class": "Car",
-      "ID": 100202,
-      "Year": 2009,
-      "Make": "Honda",
-      "Model": "Civic",
-      "Price": 4300.0,
-      "Condition": 2,
-      "FuelType": 0
-    },
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Truck, Bongs_Vehicle_Viewer_V2",
       "Mileage": 2000.0,
       "Class": "Truck",
       "ID": 100203,
-      "Year": 2022,
+      "Year": 2023,
       "Make": "Tesla",
       "Model": "Cybertruck",
       "Price": 89000.0,
@@ -42,12 +19,60 @@
       "Mileage": 225000.0,
       "Class": "Car",
       "ID": 100204,
-      "Year": 1990,
+      "Year": 1992,
       "Make": "Dodge",
       "Model": "Charger",
       "Price": 62500.0,
       "Condition": 3,
       "FuelType": 0
+    },
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
+      "Mileage": 0.0,
+      "Class": "Car",
+      "ID": 100205,
+      "Year": 1982,
+      "Make": "DMC",
+      "Model": "Delorean",
+      "Price": 70000.0,
+      "Condition": 3,
+      "FuelType": 0
+    },
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
+      "Mileage": 80500.0,
+      "Class": "Car",
+      "ID": 100207,
+      "Year": 1984,
+      "Make": "Cadillac",
+      "Model": "Ecto-1",
+      "Price": 14500.0,
+      "Condition": 1,
+      "FuelType": 0
+    },
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.aerial.Blimp, Bongs_Vehicle_Viewer_V2",
+      "MaxAltitude": 9842.0,
+      "Class": "Blimp",
+      "ID": 100208,
+      "Year": 1937,
+      "Make": "Zepplin",
+      "Model": "Hindenburg",
+      "Price": 100500.0,
+      "Condition": 2,
+      "FuelType": 4
+    },
+    {
+      "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.aerial.Plane, Bongs_Vehicle_Viewer_V2",
+      "MaxAltitude": 41000.0,
+      "Class": "Plane",
+      "ID": 100209,
+      "Year": 2025,
+      "Make": "Boeing",
+      "Model": "TrumpForce1",
+      "Price": 400000000.0,
+      "Condition": 0,
+      "FuelType": 5
     }
   ]
 }

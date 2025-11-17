@@ -27,6 +27,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
         {
             if (!File.Exists(path)) { throw new ArgumentException($"{path} is invalid or does not exist."); }
             if (data.GetType() != typeof(StorageData)) { throw new ArgumentException("Data Must be of type <StorageData>"); }
+
             string json = JsonConvert.SerializeObject(data, jsonSettings);
             File.WriteAllText(path, json);
         }
@@ -34,6 +35,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
         public static object? GetThisPlease<T>(string path)
         {
             if (!File.Exists(path)) { throw new ArgumentException($"{path} is invalid or does not exist."); }
+
             var contents = File.ReadAllText(path);
             var data = JsonConvert.DeserializeObject<T>(contents, jsonSettings);
             return data;

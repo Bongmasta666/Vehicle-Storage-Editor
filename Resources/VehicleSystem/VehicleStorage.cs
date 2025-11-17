@@ -34,7 +34,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             if (Vehicles.TryAdd(vehicle.ID, vehicle))
             {
                 TallyVehicle(vehicle, 1);
-                VehicleAdded?.Invoke(this, null); //For now, could pass some shit tho.
+                VehicleAdded?.Invoke(this, new VehicleStorageArgs(vehicle));
                 return true;
             }
             return false;
@@ -42,11 +42,11 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         public bool TryRemoveVehicle(int id)
         {
-            if (Vehicles.TryGetValue(id, out Vehicle? v))
+            if (Vehicles.TryGetValue(id, out Vehicle? old))
             {
-                TallyVehicle(v, -1);
+                TallyVehicle(old, -1);
                 Vehicles.Remove(id);
-                VehicleRemoved?.Invoke(this, null); //For now as well, could also pass some shit here too.
+                VehicleRemoved?.Invoke(this, new VehicleStorageArgs(old));
                 return true;
             }
             return false;
@@ -54,11 +54,14 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
         public bool TryEditVehicle(Vehicle vehicle)
         {
-            if (TryRemoveVehicle(vehicle.ID))
-            {                                   //Both theses will invoke events, could be for the best. 
-                if (TryAddVehicle(vehicle))
+            if (Vehicles.TryGetValue(vehicle.ID, out Vehicle? old))
+            {
+                Vehicles.Remove(old.ID);
+                TallyVehicle(old, -1);
+                if (Vehicles.TryAdd(vehicle.ID, vehicle))
                 {
-                    VehicleUpdated?.Invoke(this, null); //Okay, make a custom handler at this point!!
+                    TallyVehicle(old, 1);
+                    VehicleUpdated?.Invoke(this, new VehicleStorageArgs(vehicle));
                     return true;
                 }
                 return false;
@@ -66,23 +69,26 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return false;
         }
 
-        public void LoadFromData(StorageData data) //Doing all this here is probably not for the best
+        public void LoadFromData(StorageData data) 
         {
-            ResetStats();
-            Vehicles = [];
+            Clear();
             Name = data.Name;
-            VehicleFactory.ResetUID();
-
             if (data.List.Count > 0)
             {
                 foreach (Vehicle vehicle in data.List)
                 {
                     Vehicles.Add(vehicle.ID, vehicle);
                     TallyVehicle(vehicle, 1);
-                }
-                int VehicleUid = Vehicles.OrderBy(v => v.Value.ID).Last().Value.ID;
-                VehicleFactory.SetVehicleUID(VehicleUid + 1);
+                }      
+                VehicleFactory.SetVehicleUID(data.NextUID);
             }
+        }
+
+        public void Clear()  //We reset ID here to keep this accurate ... maybe not the best
+        {
+            ResetStats();
+            Vehicles = [];
+            VehicleFactory.ResetUID();
         }
 
         private void TallyVehicle(Vehicle vehicle, int step)
@@ -128,6 +134,14 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return total;
         }
 
-        public StorageData GetSaveData() { return new StorageData(Name, [.. Vehicles.Values]); }
+        public StorageData GetSaveData() 
+        {
+            return new StorageData(Name, [.. Vehicles.Values]) { NextUID = VehicleFactory.VehicleUID };
+        }
+    }
+
+    public class VehicleStorageArgs(Vehicle v) : EventArgs
+    {
+        public Vehicle? Vehicle { get; set; } = v; // Passing whole vehicle may be overkill.
     }
 }
