@@ -9,8 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\Images\AbstractAIArt.png" />
     <None Remove="Resources\Images\car_sport.png" />
+    <None Remove="Resources\Images\Icons\Door.png" />
+    <None Remove="Resources\Images\Icons\Open.png" />
+    <None Remove="Resources\Images\Icons\Plus.png" />
+    <None Remove="Resources\Images\Icons\Save.png" />
+    <None Remove="Resources\Images\Icons\Share.png" />
+    <None Remove="Resources\Images\Matrix_River.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,8 +27,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\Images\AbstractAIArt.png" />
-    <Resource Include="Resources\Images\car_sport.png" />
+    <Resource Include="Resources\Images\Abstract_AI_Art.png" />
+    <Resource Include="Resources\Images\Icons\Car_Sport.png" />
+    <Resource Include="Resources\Images\Icons\Door.png" />
+    <Resource Include="Resources\Images\Icons\Open.png" />
+    <Resource Include="Resources\Images\Icons\Plus.png" />
+    <Resource Include="Resources\Images\Icons\Save.png" />
+    <Resource Include="Resources\Images\Icons\Share.png" />
+    <Resource Include="Resources\Images\Matrix_River.png" />
   </ItemGroup>
 
 </Project>

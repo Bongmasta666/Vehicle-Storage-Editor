@@ -23,7 +23,7 @@
       "Model": "Yellow Sub",
       "Price": 69000.0,
       "Condition": 3,
-      "FuelType": 0
+      "FuelType": 1
     },
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",

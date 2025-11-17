@@ -10,28 +10,30 @@ using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 {
-    public class VehicleStorage
+    public class VehicleStorage(string name)
     {
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = name; 
         public Dictionary<int, Vehicle> Vehicles { get; private set; } = [];
-
-        public double TotalValue { get; private set; } = 0.0;
-        public int MotorizedVehicles { get; private set; } = 0;
-        public int AerialVehicles { get; private set; } = 0;
-        public int AquaticVehicles { get; private set; } = 0;
 
         public event EventHandler? VehicleAdded;
         public event EventHandler? VehicleRemoved;
         public event EventHandler? VehicleUpdated;
 
-        public VehicleStorage(string name) { Name = name; }
+        //Binding All These Whould Actually Go HARD!!
+        #region Statistic Variables
+        public int MotorizedVehicles { get; private set; } = 0;
+        public int AerialVehicles { get; private set; } = 0;
+        public int AquaticVehicles { get; private set; } = 0;
+        public double TotalPrice { get; private set; } = 0.0;
+        #endregion Statistic Variables
+
 
         public bool TryAddVehicle(Vehicle vehicle)
         {
             if (vehicle.ID == -1) { return false; } 
             if (Vehicles.TryAdd(vehicle.ID, vehicle))
             {
-                TallyVehicle(vehicle);
+                TallyVehicle(vehicle, 1);
                 VehicleAdded?.Invoke(this, null); //For now, could pass some shit tho.
                 return true;
             }
@@ -42,7 +44,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
         {
             if (Vehicles.TryGetValue(id, out Vehicle? v))
             {
-                TallyVehicle(v, true);
+                TallyVehicle(v, -1);
                 Vehicles.Remove(id);
                 VehicleRemoved?.Invoke(this, null); //For now as well, could also pass some shit here too.
                 return true;
@@ -72,28 +74,31 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 
             if (data.List.Count > 0)
             {
-                foreach (Vehicle v in data.List)
+                foreach (Vehicle vehicle in data.List)
                 {
-                    Vehicles.Add(v.ID, v);
-                    TallyVehicle(v);
+                    Vehicles.Add(vehicle.ID, vehicle);
+                    TallyVehicle(vehicle, 1);
                 }
-
                 int VehicleUid = Vehicles.OrderBy(v => v.Value.ID).Last().Value.ID;
                 VehicleFactory.SetVehicleUID(VehicleUid + 1);
             }
         }
 
-        //String literals suck. Maybe Just compare type with typeof or reflection library
-        private void TallyVehicle(Vehicle vehicle, bool remove = false)
+        private void TallyVehicle(Vehicle vehicle, int step)
         {
-            TotalValue += (remove) ? -vehicle.Price : vehicle.Price;
-            int value = (remove) ? -1 : 1;
-            string type = vehicle.GetType().BaseType?.Name ?? "";
-            switch (type) 
+            step = Math.Clamp(step, -1, 1);
+            TallySubType(vehicle, step);
+            TotalPrice += (vehicle.Price * step);
+        }
+
+        private void TallySubType(Vehicle vehicle, int step)
+        {
+            string? type = vehicle.GetType().BaseType?.Name ?? "";
+            switch (type)
             {
-                case "AerialVehicle": AerialVehicles += value; break;
-                case "AquaticVehicle": AquaticVehicles += value; break;
-                case "MotorizedVehicle": MotorizedVehicles += value; break;
+                case "AerialVehicle": AerialVehicles += step; break;
+                case "AquaticVehicle": AquaticVehicles += step; break;
+                case "MotorizedVehicle": MotorizedVehicles += step; break;
                 default: break;
             }
         }

@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Bongs_Vehicle_Viewer_V2" 
         xmlns:customcontrols="clr-namespace:Bongs_Vehicle_Viewer_V2.Resources.CustomControls"
         mc:Ignorable="d"
-        Icon="/Resources/Images/car_sport.png" Title="Bongs Vehicle Viewer" Height="488" MinHeight="488" Width="640" WindowStartupLocation="CenterScreen">
+        Icon="/Resources/Images/Icons/Car_Sport.png" Title="Bongs Vehicle Viewer" Height="488" MinHeight="488" Width="640" WindowStartupLocation="CenterScreen">
     
     <Grid x:Name="rootGrid"  Background="DarkGray">
         <Grid.RowDefinitions>
@@ -17,12 +17,32 @@
 
         <Menu x:Name="menuBar">
             <MenuItem Header="File">
-                <MenuItem Header="New" InputGestureText="Ctrl+N" Click="OnNewBtnPress"></MenuItem>
-                <MenuItem Header="Open" InputGestureText="Ctrl+O" Click="OnOpenBtnPress"></MenuItem>
+                <MenuItem Header="New" InputGestureText="Ctrl+N" Click="OnNewBtnPress">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Images/Icons/Plus.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Open" InputGestureText="Ctrl+O" Click="OnOpenBtnPress">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Images/Icons/Share.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator/>
-                <MenuItem Header="Save" InputGestureText="Ctrl+S" Click="OnSaveBtnPress"></MenuItem>
-                <MenuItem Header="Save As" InputGestureText="Ctrl+E" Click="OnSaveAsBtnPress"></MenuItem>
-                <MenuItem Header="Quit" InputGestureText="Crtl+X" Click="OnExitBtnPress"></MenuItem>
+                <MenuItem Header="Save" InputGestureText="Ctrl+S" Click="OnSaveBtnPress">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Images/Icons/Save.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Save As" InputGestureText="Ctrl+E" Click="OnSaveAsBtnPress">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Images/Icons/Save.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Quit" InputGestureText="Crtl+X" Click="OnExitBtnPress">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Images/Icons/Door.png"></Image>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
 
             <MenuItem Header="Options">
@@ -33,6 +53,7 @@
                 </MenuItem>
                 <MenuItem Header="Debug Theme" StaysOpenOnClick="False">
                     <RadioButton Content="Standard" GroupName="dBugThemeBtns" IsChecked="False" Checked="OnDebugThemeChange"/>
+                    <RadioButton Content="Gameboy" GroupName="dBugThemeBtns" IsChecked="False" Checked="OnDebugThemeChange"/>
                     <RadioButton Content="Matrix" GroupName="dBugThemeBtns" IsChecked="True" Checked="OnDebugThemeChange"/>
                     <RadioButton Content="Neon" GroupName="dBugThemeBtns" IsChecked="False" Checked="OnDebugThemeChange"/>
                 </MenuItem>     
@@ -87,18 +108,19 @@
                             <RowDefinition/>
                         </Grid.RowDefinitions>
                         <StackPanel Grid.Row="0" Orientation="Horizontal">
-                            <Label Content="Name:" Padding="3"/>
+                            <Label Content="Storage:" Padding="3"/>
                             <TextBox x:Name="nameTracker" Width="180" Margin="2" KeyDown="OnStorageNameChange" IsEnabled="False"/>
                         </StackPanel>
                         <DataGrid x:Name="dataGrid" Grid.Row="1" Background="GhostWhite"  IsReadOnly="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" MinWidth="64" Width="Auto" Binding="{Binding ID}"/>
+                                <DataGridTextColumn Header="Year" MinWidth="64" Width="Auto" Binding="{Binding Year}"/>
                                 <DataGridTextColumn Header="Class" MinWidth="80" Width="Auto" Binding="{Binding Class}"/>
                                 <DataGridTextColumn Header="Make" MinWidth="80" Width="Auto" Binding="{Binding Make}"/>
                                 <DataGridTextColumn Header="Model" MinWidth="80" Width="Auto" Binding="{Binding Model}"/>
-                                <DataGridTextColumn Header="Year" MinWidth="72" Width="Auto" Binding="{Binding Year}"/>
                                 <DataGridTextColumn Header="Price" MinWidth="80" Width="Auto" Binding="{Binding Price, StringFormat=C}"/>
-                                <DataGridTextColumn Header="Condition" MinWidth="64" Width="Auto" Binding="{Binding Condition}"/>
+                                <DataGridTextColumn Header="Condition" MinWidth="70" Width="Auto" Binding="{Binding Condition}"/>
+                                <DataGridTextColumn Header="FuelType" MinWidth="70" Width="Auto" Binding="{Binding FuelType}"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -124,10 +146,10 @@
             <TabItem Header="Statistics">
                 <Grid Background="#FFE5E5E5">
                     <StackPanel>
-                        <Label x:Name="totalTracker" Content="Total Vehicles: 0"/>
                         <Label x:Name="motorizedTracker" Content="Motorized Vehicles: 0"/>
-                        <Label x:Name="aerialTracker" Content="Aerial Vehicles: 0"/>
                         <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>
+                        <Label x:Name="aerialTracker" Content="Aerial Vehicles: 0"/>
+                        <Label x:Name="totalTracker" Content="Total Vehicles: 0"/>
                         <Label x:Name="priceTracker" Content="Total Price: 0"/>
                     </StackPanel>
                 </Grid>

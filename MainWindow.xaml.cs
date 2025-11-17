@@ -42,11 +42,15 @@ namespace Bongs_Vehicle_Viewer_V2
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
         public static readonly BitmapImage bgImg = 
-            ControlTools.GetImageFromURI(Path.Combine(ImagesDir, "AbstractAIArt.png"), UriKind.RelativeOrAbsolute);
+            ControlTools.GetImageFromURI(Path.Combine(ImagesDir, "Abstract_AI_Art.png"), UriKind.RelativeOrAbsolute);
 
-        ColorScheme standardScheme = new(){ Name="Standard", BGC = Brushes.White, FGC = Brushes.Black};
-        ColorScheme matrixScheme = new(){ Name="Matrix", BGC = Brushes.Black, FGC = Brushes.Lime };
-        ColorScheme neonScheme = new() { Name = "Neon", BGC = Brushes.Indigo, FGC = Brushes.Aqua };
+        public static readonly SolidColorBrush GBDark = new() { Color = (Color)ColorConverter.ConvertFromString("#306230") };
+        public static readonly SolidColorBrush GBDLighter = new() { Color = (Color)ColorConverter.ConvertFromString("#9BBC0F") };
+
+        public static readonly ColorScheme standardScheme = new(){ Name="Standard", BGC = Brushes.White, FGC = Brushes.Black};
+        public static readonly ColorScheme matrixScheme = new(){ Name="Matrix", BGC = Brushes.Black, FGC = Brushes.Lime };
+        public static readonly ColorScheme neonScheme = new() { Name = "Neon", BGC = Brushes.Indigo, FGC = Brushes.Aqua };
+        public static readonly ColorScheme gameboyScheme = new() { Name = "Gameboy", BGC = GBDark, FGC = GBDLighter };
 
         public MainWindow()
         {
@@ -233,11 +237,12 @@ namespace Bongs_Vehicle_Viewer_V2
         private void UpdateStatsPage(VehicleStorage storage)
         {
             nameTracker.Text = $"{storage.Name}"; //This is linked to the textbox for storage name
-            totalTracker.Content = $"Total Vehicles: {storage.Vehicles.Count}";
-            priceTracker.Content = $"Total Price: {storage.TotalValue:C}";
+
             motorizedTracker.Content = $"Motorized Vehicles: {storage.MotorizedVehicles}";
             aerialTracker.Content = $"Aerial Vehicles: {storage.AerialVehicles}";
             aquaticTracker.Content = $"Aquatic Vehicles: {storage.AquaticVehicles}";
+            totalTracker.Content = $"Total Vehicles: {storage.Vehicles.Count}";
+            priceTracker.Content = $"Total Price: {storage.TotalPrice:C}";
         }
 
         private void UpdateDebugPage()
@@ -407,26 +412,29 @@ namespace Bongs_Vehicle_Viewer_V2
         //Saving to prefs or just save folder doesnt hurt
         private void OnDebugThemeChange(object obj, RoutedEventArgs args)
         {
+            
+            RadioButton rbtn = (RadioButton)obj;
+            switch (rbtn.Content)
+            {
+                case "Standard":
+                    SetTheme(standardScheme); break;
+                case "Gameboy":
+                    SetTheme(gameboyScheme); break;
+                case "Matrix":
+                    SetTheme(matrixScheme); break;
+                case "Neon":
+                    SetTheme(neonScheme); break;
+                default: break;
+            }
+            if (tabControl != null) { tabControl.SelectedIndex = 2; }
+        }
+
+        private void SetTheme(ColorScheme theme)
+        {
             if (debugOutput != null)
             {
-                RadioButton rbtn = (RadioButton)obj;
-                switch (rbtn.Content)
-                {
-                    //Needs a SetTheme function for sure
-                    case "Standard":
-                        debugOutput.Background = standardScheme.BGC;
-                        debugOutput.Foreground = standardScheme.FGC;
-                        break;
-                    case "Matrix":
-                        debugOutput.Background = matrixScheme.BGC;
-                        debugOutput.Foreground = matrixScheme.FGC;
-                        break;
-                    case "Neon":
-                        debugOutput.Background = neonScheme.BGC;
-                        debugOutput.Foreground = neonScheme.FGC;
-                        break;
-                }
-                tabControl.SelectedIndex = 2;
+                debugOutput.Background = theme.BGC;
+                debugOutput.Foreground = theme.FGC;
             }
         }
 
@@ -443,6 +451,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     case "Green": brush = Brushes.Green; break;
                 }
                 dataGrid.Background = brush;
+                tabControl.SelectedIndex = 2;
             }
         }
 
