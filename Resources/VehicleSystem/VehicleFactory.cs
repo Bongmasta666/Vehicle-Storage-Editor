@@ -42,6 +42,12 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
             return type?.GetProperties(PropertyFlags) ?? null;
         }
 
+        public static PropertyInfo[]? GetConcreteProps(string className)
+        {
+            Type? type = TypeDictonary[className];
+            return type?.GetProperties(PropertyFlags) ?? null;
+        }
+
         public static List<string> GetClassNames()
         {
             List<string> names = [];

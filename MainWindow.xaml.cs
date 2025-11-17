@@ -10,6 +10,7 @@ using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using Microsoft.Win32;
+using System.DirectoryServices;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -35,7 +36,8 @@ namespace Bongs_Vehicle_Viewer_V2
         public Vehicle? Selected { get; private set; }
 
         public Dictionary<string, LabeledControl> VehicleFields { get; private set; } = [];
-        public Dictionary<string, LabeledControl> ExtraFields { get; private set; } = [];
+        public Dictionary<string, LabeledControl> ExtendedFields { get; private set; } = [];
+        public Dictionary<string, LabeledControl> ConcreteFields { get; private set; } = [];
 
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 50, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
@@ -71,7 +73,7 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.SetItemSource(ValidYears);
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
-            typeSelector.ItemIndex = 2; //Order Changes when adding new classes :/ Why? cause they suck.. might be based on folder order
+            typeSelector.ItemIndex = 3; //Order Changes when adding new classes :/ Why? cause they suck.. might be based on folder order
 
             rootGrid.Background = new ImageBrush(bgImg);
             statusBar.StartSystemClock();
@@ -80,22 +82,29 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void RebuildProperties()
         {
-            ExtraFields = [];
             extendedGrid.Children.Clear();
-            PropertyInfo[] subprops = VehicleFactory.GetExtendedProps(typeSelector.ItemName);
+            PropertyInfo[] extended = VehicleFactory.GetExtendedProps(typeSelector.ItemName);
+            ExtendedFields = BuildFromPropInfo(extended);
+            PropertyInfo[] concrete = VehicleFactory.GetConcreteProps(typeSelector.ItemName);
+            ConcreteFields = BuildFromPropInfo(concrete);
+        }
 
-            foreach (var item in subprops)
+        private Dictionary<string, LabeledControl> BuildFromPropInfo(PropertyInfo[] propArray)
+        {
+            Dictionary<string, LabeledControl> dict = [];
+            foreach (PropertyInfo item in propArray)
             {
-                Type type = item.PropertyType;
                 LabeledControl? newControl;
+                Type type = item.PropertyType;
 
                 if (item.Name == "ID") { continue; }
                 else if (type.IsEnum) { newControl = ControlTools.NewSelector(item.Name, Enum.GetValues(type)); }
                 else { newControl = new LabeledTextBox() { LabelContent = item.Name }; }
 
                 AddToPropertyGrid(newControl);
-                ExtraFields.Add(item.Name, newControl);
+                dict.Add(item.Name, newControl);
             }
+            return dict;
         }
 
         private void AddToPropertyGrid(LabeledControl control)
@@ -112,14 +121,14 @@ namespace Bongs_Vehicle_Viewer_V2
             {
                 string log = "";
                 log += ValidateRequiredFields(VehicleFields);
-                log += ValidateRequiredFields(ExtraFields);
+                log += ValidateRequiredFields(ExtendedFields);
 
                 if (log == "")
                 {
                     Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
                     v.Year = ValidYears[yearSelector.ItemIndex];
                     AssignVehicleValues(v, VehicleFields);
-                    AssignVehicleValues(v, ExtraFields);
+                    AssignVehicleValues(v, ExtendedFields);
 
                     if (Selected != null)
                     {
@@ -198,7 +207,7 @@ namespace Bongs_Vehicle_Viewer_V2
             typeSelector.ItemIndex = classNames.IndexOf(vehicle.Class);
             yearSelector.ItemIndex = ValidYears.IndexOf(vehicle.Year);
             PopulateFromDict(vehicle, VehicleFields);
-            PopulateFromDict(vehicle, ExtraFields);
+            PopulateFromDict(vehicle, ExtendedFields);
         }
 
         public void ResetFields()
@@ -207,7 +216,7 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.ItemIndex = 0;
             submitBtn.Content = "Submit";
             ResetFieldValues(VehicleFields);
-            ResetFieldValues(ExtraFields);
+            ResetFieldValues(ExtendedFields);
         }
 
         public void UnselectItem()
@@ -485,7 +494,7 @@ namespace Bongs_Vehicle_Viewer_V2
                     case "Green": brush = Brushes.Green; break;
                 }
                 dataGrid.Background = brush;
-                tabControl.SelectedIndex = 2;
+                tabControl.SelectedIndex = 0;
             }
         }
 
