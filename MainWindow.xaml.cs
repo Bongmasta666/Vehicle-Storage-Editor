@@ -31,6 +31,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public static string? LastKnownPath { get; private set; }
         private static string SavePath => string.IsNullOrEmpty(LastKnownPath) ? DefaultSaveDir : LastKnownPath;
 
+
         public VehicleStorage? Storage { get; private set; }
         public Vehicle? Selected { get; private set; }
 
@@ -41,6 +42,8 @@ namespace Bongs_Vehicle_Viewer_V2
         private static readonly int yearMod = 100;
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - yearMod, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
+
+
 
         public static readonly BitmapImage bgImg = 
             ControlTools.GetImageFromURI(Path.Combine(ImagesDir, "Abstract_AI_Art.png"), UriKind.RelativeOrAbsolute);
@@ -196,6 +199,7 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.ItemIndex = ValidYears.IndexOf(vehicle.Year);
             AssignValuesFromDict(vehicle, VehicleFields);
             AssignValuesFromDict(vehicle, ExtendedFields);
+            AssignValuesFromDict(vehicle, ConcreteFields);
         }
 
         public void ResetFields()
@@ -351,32 +355,42 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        private void TryOpenAndLoad()
+        private void TryLoad()
         {
             OpenFileDialog dialog = new(){ InitialDirectory = SavePath, Filter = "Json Files (*.json)| *.json", };
             if (dialog.ShowDialog(this) == true)            
-            {   
+            {
+                FileName = dialog.SafeFileName;
+                LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
+                if (Storage == null) { Storage = new("NewStorage"); Subscribe(Storage); }
+
                 try
-                {      
-                    StorageData data = (StorageData)MyFriendJson.GetThisPlease<StorageData>(dialog.FileName);
-                    if (Storage == null)
-                    {
-                        Storage = new(data.Name);
-                        Subscribe(Storage);
-                    }
-
-                    Storage.LoadFromData(data);
-                    LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
-                    FileName = dialog.SafeFileName;
-                    nameInput.IsEnabled = true;
-
-                    RefreshUI();
-                    UpdateDebugPage();
-                    storageTracker.Content = $"Storage: {Storage.Name}";
-                    LogSystemInfo($"{FileName} Was Loaded Successfully");
+                {
+                    MyFriendJson.LoadThisUpPlease(Storage, dialog.FileName);
+                    OnNewOrOpen($"{Storage.Name} Was Loaded Successfully");           
                 }
                 catch (Exception ex){ LogSystemInfo(ex.Message); }
             }
+        }
+
+        private void NewStorage()
+        {
+            if (Storage != null) { Unsubscribe(Storage); }
+
+            VehicleFactory.ResetUID();
+            FileName = "NewStorage.json";
+            Storage = new("New Storage");
+            Subscribe(Storage);
+            OnNewOrOpen($"Created New Storage {FileName}"); 
+        }
+
+        private void OnNewOrOpen(string message)
+        {
+            RefreshUI();
+            UpdateDebugPage();
+            nameInput.IsEnabled = true;
+            storageTracker.Content = $"Storage: {Storage?.Name}";
+            LogSystemInfo(message);
         }
 
         //This is not automatic anymore. Consider setting a flag and possibly prompting user.
@@ -386,12 +400,9 @@ namespace Bongs_Vehicle_Viewer_V2
             else if (FileName != null && Storage != null)
             {
                 try
-                {
-                    StorageData data = Storage.GetSaveData();
-                    string path = Path.Combine(SavePath, FileName);
-                    MyFriendJson.SaveThisPlease(data, path);
-                    storageTracker.Content = $"Storage: {Storage.Name}";
-                    fileSaveTracker.Content = $"Last Save {statusBar.TimeShowing}";
+                {   
+                    MyFriendJson.SaveThisStorage(Storage, FileName, SavePath);
+                    fileSaveTracker.Content = $"Last Save: {statusBar.TimeShowing}";
                     LogSystemInfo($"Vehicles saved to {FileName}");
                     UpdateDebugPage();
                 }
@@ -408,22 +419,6 @@ namespace Bongs_Vehicle_Viewer_V2
                 LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
                 SaveToJson();
             }
-        }
-
-        private void NewStorage()
-        {
-            if (Storage != null) { Unsubscribe(Storage); }
-
-            FileName = "NewStorage.json"; // This seems weird here after adding below..
-            Storage = new("New Storage"); // But than again theses have always been stinky
-            storageTracker.Content = $"Storage: {Storage.Name}";
-            nameInput.IsEnabled = true;
-            Subscribe(Storage);
-            VehicleFactory.ResetUID(); 
-
-            LogSystemInfo($"Created New Storage {FileName}");
-            UpdateDebugPage();
-            RefreshUI();
         }
 
         private void Subscribe(VehicleStorage storage)
@@ -533,7 +528,7 @@ namespace Bongs_Vehicle_Viewer_V2
         private void OnNewBtnPress(object obj, RoutedEventArgs args) => NewStorage();
         private void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveToJson();
         private void OnSaveAsBtnPress(object obj, RoutedEventArgs args) => TrySaveAs();
-        private void OnOpenBtnPress(object obj, RoutedEventArgs args) => TryOpenAndLoad();
+        private void OnOpenBtnPress(object obj, RoutedEventArgs args) => TryLoad();
         private void OnExitBtnPress(object obj, RoutedEventArgs args) => Close();
     }
 

@@ -7,11 +7,11 @@
  * If you don't know where to save, don't worry, he's got that covered too.
  */
 
-using System.IO;
-using Newtonsoft.Json;
-using System.Reflection;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
+using Newtonsoft.Json;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources
 {
@@ -22,23 +22,20 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
             TypeNameHandling = TypeNameHandling.Auto,
             Formatting = Formatting.Indented,
         };
-    
-        public static void SaveThisPlease(object data, string path)
-        {
-            if (!File.Exists(path)) { throw new ArgumentException($"{path} is invalid or does not exist."); }
-            if (data.GetType() != typeof(StorageData)) { throw new ArgumentException("Data Must be of type <StorageData>"); }
 
+        public static void SaveThisStorage(VehicleStorage storage, string fileName, string dir)
+        {
+            StorageData data = storage.GetSaveData();
+            string path = Path.Combine(dir, fileName);
             string json = JsonConvert.SerializeObject(data, jsonSettings);
             File.WriteAllText(path, json);
         }
 
-        public static object? GetThisPlease<T>(string path)
+        public static void LoadThisUpPlease(VehicleStorage storage, string filePath)
         {
-            if (!File.Exists(path)) { throw new ArgumentException($"{path} is invalid or does not exist."); }
-
-            var contents = File.ReadAllText(path);
-            var data = JsonConvert.DeserializeObject<T>(contents, jsonSettings);
-            return data;
+            var contents = File.ReadAllText(filePath);
+            StorageData data = JsonConvert.DeserializeObject<StorageData>(contents, jsonSettings);
+            storage.LoadFromData(data);  
         }
 
         public static string WhereAreMyResource()
