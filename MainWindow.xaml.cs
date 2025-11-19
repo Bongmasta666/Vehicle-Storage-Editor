@@ -22,8 +22,6 @@ namespace Bongs_Vehicle_Viewer_V2
 {
     public partial class MainWindow : Window
     {
-        public static UserSettings Settings { get; private set; } = MyFriendJson.GetThisForMePlease<UserSettings>() ?? new();
-
         public static string FileName { get; private set; } = "NewStorage.json";
         public static string? UserSavePath { get; private set; }
 
@@ -37,6 +35,9 @@ namespace Bongs_Vehicle_Viewer_V2
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 100, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
         private readonly int startType = 3; //Order Changes when adding new classes :/ This is also good to save now tho.
+
+        public static UserSettings Settings { get; private set; } =
+            MyFriendJson.GetThisForMePlease<UserSettings>(MyFriendJson.DefaultSaveDir, "Settings.json") ?? new();
 
         public static readonly BitmapImage bgImg = 
             ControlTools.GetImageFromURI(Path.Combine(MyFriendJson.ImagesDir, "Abstract_AI_Art.png"), UriKind.RelativeOrAbsolute);
@@ -55,7 +56,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public MainWindow()
         {
             InitializeComponent();
-
+            
             Storage = NewStorage();
             SetTheme(Themes[Settings.Theme]);
             rootGrid.Background = new ImageBrush(bgImg);
@@ -258,7 +259,8 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (UserSavePath != null)
             {
-                MyFriendJson.SaveThisStorage(Storage, FileName, UserSavePath);
+                try { MyFriendJson.SaveThisPlease<StorageData>(Storage.GetSaveData(), UserSavePath, FileName); }
+                catch (Exception ex) { LogSystemInfo(ex.Message); return; }
                 OnStorageSaved();
             }
             else { TrySaveAs(); }
@@ -280,10 +282,15 @@ namespace Bongs_Vehicle_Viewer_V2
             if (dialog.ShowDialog(this) == true)
             {
                 Storage ??= NewStorage();
-                MyFriendJson.LoadThisUpPlease(Storage, dialog.FileName, dialog.SafeFileName);
-
-                CaptureSaveInfo(dialog.FileName);
-                OnNewOrOpen($"{Storage.Name} Was Loaded Successfully");
+                string dir = Directory.GetParent(dialog.FileName)?.FullName ?? "";
+                StorageData? data = MyFriendJson.GetThisForMePlease<StorageData>(dir, dialog.SafeFileName);
+                if (data != null)
+                {
+                    Storage.LoadFromData(data);
+                    CaptureSaveInfo(dialog.FileName);
+                    OnNewOrOpen($"{Storage.Name} Was Loaded Successfully");
+                }        
+                //Nothing logs or shows user failure. This will need to be addressed. Throw Exceptions or Log issue.
             }
         }
 
@@ -341,7 +348,7 @@ namespace Bongs_Vehicle_Viewer_V2
                 string value = rbtn.Content.ToString() ?? "Standard";
                 Settings.Theme = value;
                 SetTheme(Themes[value]);
-                MyFriendJson.SaveTheseSettings(Settings);
+                MyFriendJson.SaveThisPlease<UserSettings>(Settings, MyFriendJson.DefaultSaveDir, "Settings.json");
             }
         }
 

@@ -7,9 +7,7 @@
  * If you don't know where to save, don't worry, he's got that covered too.
  */
 
-using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 
@@ -18,6 +16,7 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
     public static class MyFriendJson
     {
         public static readonly string ResourcesDir = WhereAreMyResource();
+
         public static readonly string ImagesDir = Path.Combine(ResourcesDir, "Images");
         public static readonly string DefaultSaveDir = Path.Combine(ResourcesDir, "SaveData");
 
@@ -27,38 +26,22 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
             Formatting = Formatting.Indented,
         };
 
-        public static void SaveThisStorage(VehicleStorage storage, string fileName, string dir)
+        public static void SaveThisPlease<T>(object data, string dir, string file) where T : class
         {
-            StorageData data = storage.GetSaveData();
-            string path = Path.Combine(dir, fileName);
-            string json = JsonConvert.SerializeObject(data, jsonSettings);
-            File.WriteAllText(path, json);
-        }
+            var path = Path.Combine(dir, file);
+            if (!File.Exists(path)) { throw new FileNotFoundException($"[Dir: {dir}] [File: {file}]"); }
 
-        public static void LoadThisUpPlease(VehicleStorage storage, string fileName, string dir)
-        {
-            string path = Path.Combine(dir, fileName);
-            var contents = File.ReadAllText(path);
-            StorageData data = JsonConvert.DeserializeObject<StorageData>(contents, jsonSettings);
-            storage.LoadFromData(data);
-        }
-
-        public static void SaveTheseSettings(object settings)
-        {
-            var contents = JsonConvert.SerializeObject(settings, jsonSettings);
-            var path = Path.Combine(DefaultSaveDir, "Settings.json");
+            var contents = JsonConvert.SerializeObject(data, typeof(T), jsonSettings);
             File.WriteAllText(path, contents);
         }
 
-        public static T? GetThisForMePlease<T>() where T : class 
+        public static T? GetThisForMePlease<T>(string dir, string file) where T : class 
         {
-            var path = Path.Combine(DefaultSaveDir, "Settings.json");
-            if (File.Exists(path))
-            {
-                var contents = File.ReadAllText(path);
-                return JsonConvert.DeserializeObject<T>(contents, jsonSettings);
-            }
-            return null;
+            var path = Path.Combine(dir, file);
+            if (!File.Exists(path)) { throw new FileNotFoundException($"[Dir: {dir}] [File: {file}]"); }
+
+            var contents = File.ReadAllText(path);
+            return JsonConvert.DeserializeObject<T>(contents, jsonSettings);
         }
 
         public static string WhereAreMyResource()

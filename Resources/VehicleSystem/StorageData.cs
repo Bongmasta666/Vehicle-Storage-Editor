@@ -10,7 +10,7 @@ using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 
 namespace Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem
 {
-    public struct StorageData(string name, List<Vehicle> list)
+    public class StorageData(string name, List<Vehicle> list)
     {
         public string Name { get; set; } = name;
         public int NextUID { get; set; } = 0;
