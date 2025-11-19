@@ -1,6 +1,6 @@
 ﻿/* File: MainWindow.xaml.cs
  * Author: Michael Millar
- * Date: 16-11-2025
+ * Date: 19-11-2025
  * Description: 
  * This file is the root of the application and contains code for the Main Window and marjority of the UI functionality
  */
@@ -10,7 +10,6 @@ using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using Microsoft.Win32;
-using Newtonsoft.Json;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -23,9 +22,10 @@ namespace Bongs_Vehicle_Viewer_V2
 {
     public partial class MainWindow : Window
     {
-        public static string? FileName { get; private set; }
+        public static UserSettings Settings { get; private set; } = MyFriendJson.GetThisForMePlease<UserSettings>() ?? new();
+
+        public static string FileName { get; private set; } = "NewStorage.json";
         public static string? UserSavePath { get; private set; }
-        public UserSettings Settings { get; private set; } = new();
 
         public VehicleStorage? Storage { get; private set; }
         public Vehicle? Selected { get; private set; }
@@ -56,6 +56,10 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             InitializeComponent();
 
+            SetTheme(Themes[Settings.Theme]);
+            rootGrid.Background = new ImageBrush(bgImg);
+
+            ControlTools.SetRadioBtn(Settings.Theme, btnContainerTheme.Items);
             ControlTools.AddKeyBinding(this, Key.N, ModifierKeys.Control, OnNewBtnPress);
             ControlTools.AddKeyBinding(this, Key.O, ModifierKeys.Control, OnOpenBtnPress);
             ControlTools.AddKeyBinding(this, Key.S, ModifierKeys.Control, OnSaveBtnPress);
@@ -72,16 +76,10 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.SetItemSource(ValidYears);
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
-            typeSelector.ItemIndex = startType; 
+            typeSelector.ItemIndex = startType;
 
-            rootGrid.Background = new ImageBrush(bgImg);
-            statusBar.StartSystemClock();
-            LoadSettings();
-
-            //Uncomment below to load sample data
-            //Storage = new("");
-            //MyFriendJson.LoadThisUpPlease(Storage, "SampleStorage.json", MyFriendJson.DefaultSaveDir);
-            //OnNewOrOpen("Loaded Sample Data");
+            statusBar.StartSystemClock(); //Doing this here prevents clock running in editor
+            NewStorage();
         }
 
         private void RebuildProperties()
@@ -99,7 +97,7 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (Storage != null)
             {
-                string log = "";
+                string log = ""; //Were still doing nothing with this.
                 log += ControlTools.ValidateRequiredFields([.. VehicleFields.Values]);
                 log += ControlTools.ValidateRequiredFields([.. ExtendedFields.Values]);
                 log += ControlTools.ValidateRequiredFields([.. ConcreteFields.Values]);
@@ -119,17 +117,46 @@ namespace Bongs_Vehicle_Viewer_V2
                             v.ID = Selected.ID;
                             if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
                         }
-                        else
+                        else //Doing something better with logging will futrther improve this
                         {
                             v.ID = VehicleFactory.UseVehicleUID();
                             if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
-                        }
-
-                        ResetFields();
-                        RefreshUI();
+                        } 
                     }            
                 }
             } else { LogSystemInfo("No Storage Currently Loaded."); }
+        }
+
+        //Pretty limited right now and need better handling. For nnow it does the trick.
+        private void OnSearchBarSubmit(object obj, KeyEventArgs args)
+        {
+            if (args.Key == Key.Enter)
+            {
+                if (Storage != null)
+                {
+                    string input = searchBar.Text.Trim();
+                    if (!string.IsNullOrEmpty(input))
+                    {
+                        try
+                        {
+                            int value = int.Parse(input);
+                            if (Storage.Vehicles.TryGetValue(value, out Vehicle? car))
+                            {
+                                LogSystemInfo("Vehicle Match Found");
+                                dataGrid.SelectedItem = car;
+                                dataGrid.ScrollIntoView(value);
+                                dataGrid.Focus();
+                            }
+                            else
+                            {
+                                searchBar.Text = "";
+                                LogSystemInfo("No Match Found");
+                            }
+                        }
+                        catch (Exception ex) { LogSystemInfo(ex.Message); }
+                    }
+                } else { LogSystemInfo("No Storage Currently Loaded."); }
+            }
         }
 
         private void OnVehicleSelected(object obj, RoutedEventArgs args)
@@ -145,41 +172,39 @@ namespace Bongs_Vehicle_Viewer_V2
                 yearSelector.ItemIndex = ValidYears.IndexOf(Selected.Year);
 
                 submitBtn.Content = "Update";
-                removeBtn.IsEnabled = true;
-                unselectBtn.IsEnabled = true;
+                searchBar.Text = Selected.ID.ToString();
+                removeBtn.IsEnabled = unselectBtn.IsEnabled = true;
             }
-            else 
-            {
-                removeBtn.IsEnabled = false;
-                unselectBtn.IsEnabled = false;
-            }
+            else { removeBtn.IsEnabled = unselectBtn.IsEnabled = false; }
         }
+
 
         private void OnVehicleAdded(object? obj, EventArgs args)
         {
             LogSystemInfo("Vehicle Added Successfully");
+            ResetFields();
             RefreshUI();
         }
 
         private void OnVehicleUpdated(object? obj, EventArgs args)
         {
             LogSystemInfo("Vehicle Updated Successfully");
-            RefreshUI();
             UnselectItem();
+            RefreshUI();
         }
 
         private void OnVehicleRemoved(object? obj, EventArgs args)
         {
             LogSystemInfo("Vehicle Removed Successfully");
-            RefreshUI();
             UnselectItem();
+            RefreshUI();
         }
 
         private void RefreshUI()
         {
             if (Storage != null)
             {
-                vehicleIDLabel.Content = $"Next ID: {VehicleFactory.VehicleUID}"; //Seems right
+                vehicleIDLabel.Content = $"Next ID: {VehicleFactory.VehicleUID}";
                 dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
                 UpdateStatsPage(Storage);
             }
@@ -201,37 +226,9 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             Selected = null;
             dataGrid.SelectedIndex = -1;
-            searchBar.Text = ""; 
             submitBtn.Content = "Submit";
+            searchBar.Text = ""; 
             ResetFields();
-        }
-
-        //Pretty limited right now and need better handling. For nnow it does the trick.
-        private void OnSearchBarSubmit(object obj, KeyEventArgs args)
-        {
-            if (args.Key == Key.Enter )
-            {
-                string input = searchBar.Text.Trim();
-                searchBar.Text = "";
-                if (Storage != null)
-                {               
-                    if (!string.IsNullOrEmpty(input))
-                    {
-                        try
-                        {
-                            int value = int.Parse(input);
-                            if (Storage.Vehicles.TryGetValue(value, out Vehicle? car))
-                            {
-                                LogSystemInfo("Vehicle Match Found");
-                                dataGrid.SelectedItem = car;
-                                dataGrid.ScrollIntoView(value);
-                                dataGrid.Focus();
-                            }                
-                        }
-                        catch (Exception ex) { LogSystemInfo(ex.Message); }
-                    }
-                } else { LogSystemInfo("No Storage Currently Loaded."); }
-            } 
         }
 
         private void UpdateStatsPage(VehicleStorage storage)
@@ -249,7 +246,7 @@ namespace Bongs_Vehicle_Viewer_V2
         private void UpdateDebugPage()
         {       
             directoryTracker.Content = $"Save Directory: {UserSavePath ?? "Undefined"}";
-            filenameTracker.Content = $"File Name: {FileName ?? "Undefined"}";
+            filenameTracker.Content = $"File Name: {FileName}";
         }
 
         private void NewStorage()
@@ -266,8 +263,8 @@ namespace Bongs_Vehicle_Viewer_V2
         //This is not automatic anymore. Consider setting a flag and possibly prompting user.
         private void SaveVehicleStorage()
         {
-            if (FileName == null || UserSavePath == null) TrySaveAs();
-            else if (FileName != null && UserSavePath != null && Storage != null) 
+            if (UserSavePath == null) TrySaveAs();
+            else if (UserSavePath != null && Storage != null) 
             {
                 MyFriendJson.SaveThisStorage(Storage, FileName, UserSavePath);
                 OnStorageSaved();
@@ -276,7 +273,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void TrySaveAs()
         {
-            SaveFileDialog dialog = new() { FileName = FileName ?? "NewFile.json", Filter = "Json Files (*.json)| *.json" };
+            SaveFileDialog dialog = new() { FileName = FileName , Filter = "Json Files (*.json)| *.json" };
             if (dialog.ShowDialog(this) == true) 
             {
                 CaptureSaveInfo(dialog.FileName);
@@ -352,9 +349,9 @@ namespace Bongs_Vehicle_Viewer_V2
             {
                 RadioButton rbtn = (RadioButton)obj;
                 string value = rbtn.Content.ToString() ?? "Standard";
-                SetTheme(Themes[value]);
                 Settings.Theme = value;
-                SaveSettings();
+                SetTheme(Themes[value]);
+                MyFriendJson.SaveTheseSettings(Settings);
             }
         }
 
@@ -373,23 +370,6 @@ namespace Bongs_Vehicle_Viewer_V2
             aerialTracker.Foreground = theme.FGC;
             aquaticTracker.Foreground = theme.FGC;
             totalTracker.Foreground = theme.FGC;
-        }
-
-        public void SaveSettings()
-        {
-            var contents = JsonConvert.SerializeObject(Settings, MyFriendJson.jsonSettings);
-            var path = Path.Combine(MyFriendJson.DefaultSaveDir, "Settings.json");
-            File.WriteAllText(path, contents);
-        }
-
-        public void LoadSettings()
-        {
-            var path = Path.Combine(MyFriendJson.DefaultSaveDir, "Settings.json");
-            var contents = File.ReadAllText(path);
-            Settings = JsonConvert.DeserializeObject<UserSettings>(contents, MyFriendJson.jsonSettings);
-
-            SetTheme(Themes[Settings.Theme]);
-            ControlTools.SetRadioBtn(Settings.Theme, btnContainerTheme.Items);
         }
 
         private void LogSystemInfo(string message)

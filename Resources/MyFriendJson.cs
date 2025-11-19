@@ -43,6 +43,24 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
             storage.LoadFromData(data);
         }
 
+        public static void SaveTheseSettings(object settings)
+        {
+            var contents = JsonConvert.SerializeObject(settings, jsonSettings);
+            var path = Path.Combine(DefaultSaveDir, "Settings.json");
+            File.WriteAllText(path, contents);
+        }
+
+        public static T? GetThisForMePlease<T>() where T : class 
+        {
+            var path = Path.Combine(DefaultSaveDir, "Settings.json");
+            if (File.Exists(path))
+            {
+                var contents = File.ReadAllText(path);
+                return JsonConvert.DeserializeObject<T>(contents, jsonSettings);
+            }
+            return null;
+        }
+
         public static string WhereAreMyResource()
         {
             var targetDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location)?.Parent?.Parent?.Parent;
