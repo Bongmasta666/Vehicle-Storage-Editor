@@ -23,11 +23,9 @@ namespace Bongs_Vehicle_Viewer_V2
 {
     public partial class MainWindow : Window
     {
-        //This should be addressed at some point too
         public static string? FileName { get; private set; }
         public static string? UserSavePath { get; private set; }
-
-        public UserSettings settings = new();
+        public UserSettings Settings { get; private set; } = new();
 
         public VehicleStorage? Storage { get; private set; }
         public Vehicle? Selected { get; private set; }
@@ -38,6 +36,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 100, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
+        private readonly int startType = 3; //Order Changes when adding new classes :/ This is also good to save now tho.
 
         public static readonly BitmapImage bgImg = 
             ControlTools.GetImageFromURI(Path.Combine(MyFriendJson.ImagesDir, "Abstract_AI_Art.png"), UriKind.RelativeOrAbsolute);
@@ -73,17 +72,16 @@ namespace Bongs_Vehicle_Viewer_V2
             yearSelector.SetItemSource(ValidYears);
             stateSelector.SetItemSource(Enum.GetNames(typeof(VehicleConditon)));
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
-            typeSelector.ItemIndex = 3; //Order Changes when adding new classes :/ Why? cause they suck.. might be based on folder order
+            typeSelector.ItemIndex = startType; 
 
             rootGrid.Background = new ImageBrush(bgImg);
             statusBar.StartSystemClock();
             LoadSettings();
 
-
             //Uncomment below to load sample data
-            Storage = new("");
-            MyFriendJson.LoadThisUpPlease(Storage, "SampleStorage.json", MyFriendJson.DefaultSaveDir);
-            OnNewOrOpen("Loaded Sample Data");
+            //Storage = new("");
+            //MyFriendJson.LoadThisUpPlease(Storage, "SampleStorage.json", MyFriendJson.DefaultSaveDir);
+            //OnNewOrOpen("Loaded Sample Data");
         }
 
         private void RebuildProperties()
@@ -91,20 +89,10 @@ namespace Bongs_Vehicle_Viewer_V2
             extendedGrid.Children.Clear();
 
             PropertyInfo[] extended = VehicleFactory.GetExtendedProps(typeSelector.ItemName);
-            ExtendedFields = BuildFromPropInfo(extended);
-            foreach (LabeledControl control in ExtendedFields.Values) { AddToPropertyGrid(control); }
+            ExtendedFields = ControlTools.BuildFromPropInfo(extended, extendedGrid);
 
             PropertyInfo[] concrete = VehicleFactory.GetConcreteProps(typeSelector.ItemName);
-            ConcreteFields = BuildFromPropInfo(concrete);
-            foreach (LabeledControl control in ConcreteFields.Values) { AddToPropertyGrid(control); }
-        }
-
-        private void AddToPropertyGrid(LabeledControl control)
-        {
-            Grid.SetRow(control, extendedGrid.Children.Count);
-            RowDefinition r = new() { Height = GridLength.Auto };
-            extendedGrid.RowDefinitions.Add(r);
-            extendedGrid.Children.Add(control);
+            ConcreteFields = ControlTools.BuildFromPropInfo(concrete, extendedGrid);
         }
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
@@ -112,29 +100,34 @@ namespace Bongs_Vehicle_Viewer_V2
             if (Storage != null)
             {
                 string log = "";
-                log += ValidateRequiredFields(VehicleFields);
-                log += ValidateRequiredFields(ExtendedFields);
+                log += ControlTools.ValidateRequiredFields([.. VehicleFields.Values]);
+                log += ControlTools.ValidateRequiredFields([.. ExtendedFields.Values]);
+                log += ControlTools.ValidateRequiredFields([.. ConcreteFields.Values]);
 
                 if (log == "")
                 {
                     Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
-                    v.Year = ValidYears[yearSelector.ItemIndex];
-                    AssignVehicleValues(v, VehicleFields);
-                    AssignVehicleValues(v, ExtendedFields);
-
-                    if (Selected != null)
+                    if (v != null) 
                     {
-                        v.ID = Selected.ID;
-                        if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
-                    }
-                    else
-                    {
-                        v.ID = VehicleFactory.UseVehicleUID();
-                        if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
-                    }
+                        ControlTools.AssignToObject(v, VehicleFields);
+                        ControlTools.AssignToObject(v, ExtendedFields);
+                        ControlTools.AssignToObject(v, ConcreteFields);
+                        v.Year = ValidYears[yearSelector.ItemIndex];
 
-                    ResetFields();
-                    RefreshUI();
+                        if (Selected != null)
+                        {
+                            v.ID = Selected.ID;
+                            if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
+                        }
+                        else
+                        {
+                            v.ID = VehicleFactory.UseVehicleUID();
+                            if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
+                        }
+
+                        ResetFields();
+                        RefreshUI();
+                    }            
                 }
             } else { LogSystemInfo("No Storage Currently Loaded."); }
         }
@@ -144,7 +137,13 @@ namespace Bongs_Vehicle_Viewer_V2
             if (dataGrid.SelectedIndex != -1)
             {
                 Selected = (Vehicle)dataGrid.SelectedItem;
-                PopulateAllFields(Selected);
+                ControlTools.AssignFromObject(Selected, VehicleFields);
+                ControlTools.AssignFromObject(Selected, ExtendedFields);
+                ControlTools.AssignFromObject(Selected, ConcreteFields);
+
+                typeSelector.ItemIndex = classNames.IndexOf(Selected.Class);
+                yearSelector.ItemIndex = ValidYears.IndexOf(Selected.Year);
+
                 submitBtn.Content = "Update";
                 removeBtn.IsEnabled = true;
                 unselectBtn.IsEnabled = true;
@@ -153,15 +152,6 @@ namespace Bongs_Vehicle_Viewer_V2
             {
                 removeBtn.IsEnabled = false;
                 unselectBtn.IsEnabled = false;
-                Selected = null; 
-            }
-        }
-
-        private void OnRemoveBtnPress(object obj, RoutedEventArgs args)
-        {
-            if (Storage != null && Selected != null)
-            {
-                if (!Storage.TryRemoveVehicle(Selected.ID)) { LogSystemInfo("FAILED TO REMOVE VEHICLE"); }
             }
         }
 
@@ -195,28 +185,24 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        private void PopulateAllFields(Vehicle vehicle)
-        {
-            typeSelector.ItemIndex = classNames.IndexOf(vehicle.Class);
-            yearSelector.ItemIndex = ValidYears.IndexOf(vehicle.Year);
-            AssignValuesFromDict(vehicle, VehicleFields);
-            AssignValuesFromDict(vehicle, ExtendedFields);
-            AssignValuesFromDict(vehicle, ConcreteFields);
-        }
-
         public void ResetFields()
         {
-            searchBar.Text = ""; // Here or down There. It's Up in the Air.
+            ControlTools.ResetFieldValues([.. VehicleFields.Values]);
+            ControlTools.ResetFieldValues([.. ExtendedFields.Values]);
+            ControlTools.ResetFieldValues([.. ConcreteFields.Values]);
+
             yearSelector.ItemIndex = 0;
-            submitBtn.Content = "Submit";
-            ResetFieldValues(VehicleFields);
-            ResetFieldValues(ExtendedFields);
+            typeSelector.ItemIndex = startType;
+
+            if (Selected != null) { dataGrid.Focus(); }
         }
 
         public void UnselectItem()
         {
             Selected = null;
             dataGrid.SelectedIndex = -1;
+            searchBar.Text = ""; 
+            submitBtn.Content = "Submit";
             ResetFields();
         }
 
@@ -265,85 +251,6 @@ namespace Bongs_Vehicle_Viewer_V2
             directoryTracker.Content = $"Save Directory: {UserSavePath ?? "Undefined"}";
             filenameTracker.Content = $"File Name: {FileName ?? "Undefined"}";
         }
-
-        public static Dictionary<string, LabeledControl> BuildFromPropInfo(PropertyInfo[] propArray)
-        {
-            Dictionary<string, LabeledControl> dict = [];
-            foreach (PropertyInfo item in propArray)
-            {
-                LabeledControl? newControl;
-                Type type = item.PropertyType;
-
-                if (item.Name == "ID") { continue; } // This here is proof something needs to be abstracted
-                else if (type.IsEnum) { newControl = ControlTools.NewSelector(item.Name, Enum.GetValues(type)); }
-                else { newControl = new LabeledTextBox() { LabelContent = item.Name }; }
-                dict.Add(item.Name, newControl);
-            }
-            return dict;
-        }
-
-        public static void AssignValuesFromDict(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
-        {
-            foreach (var item in fieldDict)
-            {
-                PropertyInfo? prop = v.GetType().GetProperty(item.Key);
-                if (prop != null) 
-                {
-                    var value = prop.GetValue(v);
-                    if (value != null)
-                    {
-                        if (item.Value is LabeledSelector ls) { ls.ItemIndex = (int)value; }
-                        else if (item.Value is LabeledTextBox lt) { lt.TextContent = value.ToString() ?? ""; }
-                    }            
-                }      
-            }
-        }
-
-        //Numeric validation is done in ValidateTextBox for now but we need to get the numeric value.
-        private static string ValidateRequiredFields(Dictionary<string, LabeledControl> fieldDict)
-        {
-            string log = "";
-            foreach (var item in fieldDict)
-            {
-                if (item.Value is LabeledTextBox lt)
-                {
-                    if (!ControlTools.ValidateTextBox(lt)) { log += $"{item.Key} Is Empty Or Invalid\n"; }
-                }
-            }return log;
-        }
-
-        private static void ResetFieldValues(Dictionary<string, LabeledControl> fieldDict)
-        {
-            foreach (var item in fieldDict.Values)
-            {
-                if (item is LabeledSelector ls) { ls.ItemIndex = 0; }
-                else if (item is LabeledTextBox lt) { lt.Reset(); }
-            }
-        }
-
-        //If we want to display errors either make non-static or some way to communicate with statusbar 
-        private static void AssignVehicleValues(Vehicle v, Dictionary<string, LabeledControl> fieldDict)
-        {
-            foreach (var item in fieldDict)
-            {
-                PropertyInfo? prop = v.GetType().GetProperty(item.Key);
-                if (prop != null) 
-                {
-                    Type type = prop.PropertyType;
-                    if (item.Value is LabeledSelector lselect) { prop.SetValue(v, lselect.ItemIndex); }
-                    else if (item.Value is LabeledTextBox ltbox)
-                    {
-                        if (type == typeof(int) || type == typeof(double))
-                        {
-                            //Kinda rough because we parse in validating ..  it works for now tho
-                            if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(v, value); }
-                        }
-                        else { prop.SetValue(v, ltbox.TextContent); }
-                    }
-                }
-            }
-        }
-
 
         private void NewStorage()
         {
@@ -446,7 +353,7 @@ namespace Bongs_Vehicle_Viewer_V2
                 RadioButton rbtn = (RadioButton)obj;
                 string value = rbtn.Content.ToString() ?? "Standard";
                 SetTheme(Themes[value]);
-                settings.Theme = value;
+                Settings.Theme = value;
                 SaveSettings();
             }
         }
@@ -470,7 +377,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         public void SaveSettings()
         {
-            var contents = JsonConvert.SerializeObject(settings, MyFriendJson.jsonSettings);
+            var contents = JsonConvert.SerializeObject(Settings, MyFriendJson.jsonSettings);
             var path = Path.Combine(MyFriendJson.DefaultSaveDir, "Settings.json");
             File.WriteAllText(path, contents);
         }
@@ -479,10 +386,10 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             var path = Path.Combine(MyFriendJson.DefaultSaveDir, "Settings.json");
             var contents = File.ReadAllText(path);
-            settings = JsonConvert.DeserializeObject<UserSettings>(contents, MyFriendJson.jsonSettings);
+            Settings = JsonConvert.DeserializeObject<UserSettings>(contents, MyFriendJson.jsonSettings);
 
-            SetTheme(Themes[settings.Theme]);
-            ControlTools.SetRadioBtn(settings.Theme, btnContainerTheme.Items);
+            SetTheme(Themes[Settings.Theme]);
+            ControlTools.SetRadioBtn(Settings.Theme, btnContainerTheme.Items);
         }
 
         private void LogSystemInfo(string message)
@@ -506,6 +413,14 @@ namespace Bongs_Vehicle_Viewer_V2
                             debugOutput.Text = string.Empty; break;
                     }
                 }
+            }
+        }
+
+        private void OnRemoveBtnPress(object obj, RoutedEventArgs args)
+        {
+            if (Storage != null && Selected != null)
+            {
+                if (!Storage.TryRemoveVehicle(Selected.ID)) { LogSystemInfo("FAILED TO REMOVE VEHICLE"); }
             }
         }
 

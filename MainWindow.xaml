@@ -134,7 +134,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="1,6" VerticalAlignment="Center">
                             <Button x:Name="submitBtn" Content="Submit" Width="64" Margin="4,1" FontSize="12" Click="OnSubmitBtnPress"/>
-                            <Button x:Name="resetBtn" Content="Clear" Width="64" Margin="4,1" FontSize="12" Click="OnResetBtnPress"/>
+                            <Button x:Name="resetBtn" Content="Reset" Width="64" Margin="4,1" FontSize="12" Click="OnResetBtnPress"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="1,6" VerticalAlignment="Center" HorizontalAlignment="Center">

@@ -5,7 +5,9 @@
  * A static utility class that contains control related functions.
  */
 
+using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using System.Collections;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -40,6 +42,41 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
             return s;
         }
 
+        public static Dictionary<string, LabeledControl> BuildFromPropInfo(PropertyInfo[] propArray, Grid propGrid)
+        {
+            Dictionary<string, LabeledControl> dict = [];
+            foreach (PropertyInfo item in propArray)
+            {
+                LabeledControl? newControl;
+                Type type = item.PropertyType;
+
+                if (type.IsEnum) { newControl = NewSelector(item.Name, Enum.GetValues(type)); }
+                else { newControl = new LabeledTextBox() { LabelContent = item.Name }; }
+
+                Grid.SetRow(newControl, propGrid.Children.Count);
+                RowDefinition r = new() { Height = GridLength.Auto };
+                propGrid.RowDefinitions.Add(r);
+                propGrid.Children.Add(newControl);
+
+                dict.Add(item.Name, newControl);
+            }
+            return dict;
+        }
+
+        //Numeric validation is done in ValidateTextBox for now but we need to get the numeric value.
+        public static string ValidateRequiredFields(List<LabeledControl> controls)
+        {
+            string log = "";
+            foreach (LabeledControl item in controls)
+            {
+                if (item is LabeledTextBox lt)
+                {
+                    if (!ValidateTextBox(lt)) { log += $"{lt.LabelContent} Is Empty Or Invalid\n"; }
+                }
+            }
+            return log;
+        }
+
         //Kind rough but should handle everything atm. Being able to pass the numeric value would be optimal.
         public static bool ValidateTextBox(LabeledTextBox textBox)
         {
@@ -53,6 +90,54 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
                 else { return false; }
             }
             return true;
+        }
+
+        public static void AssignFromObject(object obj, Dictionary<string, LabeledControl> fieldDict)
+        {
+            foreach (var item in fieldDict)
+            {
+                PropertyInfo? prop = obj.GetType().GetProperty(item.Key);
+                if (prop != null)
+                {
+                    var value = prop.GetValue(obj);
+                    if (value != null)
+                    {
+                        if (item.Value is LabeledSelector ls) { ls.ItemIndex = (int)value; }
+                        else if (item.Value is LabeledTextBox lt) { lt.TextContent = value.ToString() ?? ""; }
+                    }
+                }
+            }
+        }
+
+        public static void AssignToObject(object obj, Dictionary<string, LabeledControl> fieldDict)
+        {
+            foreach (var item in fieldDict)
+            {
+                PropertyInfo? prop = obj.GetType().GetProperty(item.Key);
+                if (prop != null)
+                {
+                    Type type = prop.PropertyType;
+                    if (item.Value is LabeledSelector lselect) { prop.SetValue(obj, lselect.ItemIndex); }
+                    else if (item.Value is LabeledTextBox ltbox)
+                    {
+                        if (type == typeof(int) || type == typeof(double))
+                        {
+                            //Kinda rough because we parse in validating ..  it works for now tho
+                            if (double.TryParse(ltbox.TextContent, out double value)) { prop.SetValue(obj, value); }
+                        }
+                        else { prop.SetValue(obj, ltbox.TextContent); }
+                    }
+                }
+            }
+        }
+
+        public static void ResetFieldValues(List<LabeledControl> controls)
+        {
+            foreach (LabeledControl item in controls)
+            {
+                if (item is LabeledSelector ls) { ls.ItemIndex = 0; }
+                else if (item is LabeledTextBox lt) { lt.Reset(); }
+            }
         }
 
         public static void SetRadioBtn(string name, ItemCollection collection)
