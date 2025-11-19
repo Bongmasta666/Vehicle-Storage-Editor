@@ -56,7 +56,7 @@
         </Menu>
         
         <TabControl x:Name="tabControl" Grid.Row="1" Margin="4">
-            <TabItem Header="Vehicles">
+            <TabItem Header="Vehicles" Background="LightGray">
                 <Grid Background="WhiteSmoke">
                     <Grid.RowDefinitions>
                         <RowDefinition/>
@@ -145,11 +145,11 @@
                     </Grid>
                 </Grid>
             </TabItem>
-            
-            <TabItem Header="Statistics">
-                <Grid Background="WhiteSmoke">
+
+            <TabItem Header="Statistics" Background="LightGray">
+                <Grid Margin="6">
                     <Border BorderBrush="DarkGray" BorderThickness="2" HorizontalAlignment="Stretch">
-                        <StackPanel x:Name="trackPanel" Background="WhiteSmoke">
+                        <StackPanel x:Name="trackPanel">
                             <Label x:Name="storageTracker" Content="Storage: Empty"/>
                             <Label x:Name="motorizedTracker" Content="Motorized Vehicles: 0"/>
                             <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>
@@ -163,7 +163,7 @@
                 </Grid>
             </TabItem>
             
-            <TabItem Header="Debug">
+            <TabItem Header="Debug" Background="LightGray">
                 <Grid Background="#FFE5E5E5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>

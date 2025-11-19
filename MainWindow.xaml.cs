@@ -27,7 +27,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public static string FileName { get; private set; } = "NewStorage.json";
         public static string? UserSavePath { get; private set; }
 
-        public VehicleStorage? Storage { get; private set; }
+        public VehicleStorage Storage { get; private set; } 
         public Vehicle? Selected { get; private set; }
 
         public Dictionary<string, LabeledControl> VehicleFields { get; private set; } = [];
@@ -56,6 +56,7 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             InitializeComponent();
 
+            Storage = NewStorage();
             SetTheme(Themes[Settings.Theme]);
             rootGrid.Background = new ImageBrush(bgImg);
 
@@ -78,8 +79,7 @@ namespace Bongs_Vehicle_Viewer_V2
             fuelSelector.SetItemSource(Enum.GetNames(typeof(FuelType)));
             typeSelector.ItemIndex = startType;
 
-            statusBar.StartSystemClock(); //Doing this here prevents clock running in editor
-            NewStorage();
+            statusBar.StartSystemClock(); //Doing this here prevents clock running in editor     
         }
 
         private void RebuildProperties()
@@ -95,36 +95,33 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnSubmitBtnPress(object obj, RoutedEventArgs args)
         {
-            if (Storage != null)
+            string log = ""; //Were still doing nothing with this.
+            log += ControlTools.ValidateRequiredFields([.. VehicleFields.Values]);
+            log += ControlTools.ValidateRequiredFields([.. ExtendedFields.Values]);
+            log += ControlTools.ValidateRequiredFields([.. ConcreteFields.Values]);
+
+            if (log == "")
             {
-                string log = ""; //Were still doing nothing with this.
-                log += ControlTools.ValidateRequiredFields([.. VehicleFields.Values]);
-                log += ControlTools.ValidateRequiredFields([.. ExtendedFields.Values]);
-                log += ControlTools.ValidateRequiredFields([.. ConcreteFields.Values]);
-
-                if (log == "")
+                Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
+                if (v != null) 
                 {
-                    Vehicle? v = VehicleFactory.NewVehicle(typeSelector.ItemName);
-                    if (v != null) 
-                    {
-                        ControlTools.AssignToObject(v, VehicleFields);
-                        ControlTools.AssignToObject(v, ExtendedFields);
-                        ControlTools.AssignToObject(v, ConcreteFields);
-                        v.Year = ValidYears[yearSelector.ItemIndex];
+                    ControlTools.AssignToObject(v, VehicleFields);
+                    ControlTools.AssignToObject(v, ExtendedFields);
+                    ControlTools.AssignToObject(v, ConcreteFields);
+                    v.Year = ValidYears[yearSelector.ItemIndex];
 
-                        if (Selected != null)
-                        {
-                            v.ID = Selected.ID;
-                            if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
-                        }
-                        else //Doing something better with logging will futrther improve this
-                        {
-                            v.ID = VehicleFactory.UseVehicleUID();
-                            if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
-                        } 
-                    }            
-                }
-            } else { LogSystemInfo("No Storage Currently Loaded."); }
+                    if (Selected != null)
+                    {
+                        v.ID = Selected.ID;
+                        if (!Storage.TryEditVehicle(v)) { LogSystemInfo("FAILED TO EDIT OLD VEHICLE"); return; }
+                    }
+                    else //Doing something better with logging will futrther improve this
+                    {
+                        v.ID = VehicleFactory.UseVehicleUID();
+                        if (!Storage.TryAddVehicle(v)) { LogSystemInfo("FAILED TO ADD NEW VEHICLE"); return; }
+                    } 
+                }            
+            }
         }
 
         //Pretty limited right now and need better handling. For nnow it does the trick.
@@ -132,30 +129,27 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (args.Key == Key.Enter)
             {
-                if (Storage != null)
+                string input = searchBar.Text.Trim();
+                if (!string.IsNullOrEmpty(input))
                 {
-                    string input = searchBar.Text.Trim();
-                    if (!string.IsNullOrEmpty(input))
+                    try
                     {
-                        try
+                        int value = int.Parse(input);
+                        if (Storage.Vehicles.TryGetValue(value, out Vehicle? car))
                         {
-                            int value = int.Parse(input);
-                            if (Storage.Vehicles.TryGetValue(value, out Vehicle? car))
-                            {
-                                LogSystemInfo("Vehicle Match Found");
-                                dataGrid.SelectedItem = car;
-                                dataGrid.ScrollIntoView(value);
-                                dataGrid.Focus();
-                            }
-                            else
-                            {
-                                searchBar.Text = "";
-                                LogSystemInfo("No Match Found");
-                            }
+                            LogSystemInfo("Vehicle Match Found");
+                            dataGrid.SelectedItem = car;
+                            dataGrid.ScrollIntoView(value);
+                            dataGrid.Focus();
                         }
-                        catch (Exception ex) { LogSystemInfo(ex.Message); }
+                        else
+                        {
+                            searchBar.Text = "";
+                            LogSystemInfo("No Match Found");
+                        }
                     }
-                } else { LogSystemInfo("No Storage Currently Loaded."); }
+                    catch (Exception ex) { LogSystemInfo(ex.Message); }
+                }
             }
         }
 
@@ -202,12 +196,9 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void RefreshUI()
         {
-            if (Storage != null)
-            {
-                vehicleIDLabel.Content = $"Next ID: {VehicleFactory.VehicleUID}";
-                dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
-                UpdateStatsPage(Storage);
-            }
+            vehicleIDLabel.Content = $"Next ID: {VehicleFactory.VehicleUID}";
+            dataGrid.ItemsSource = Storage.Vehicles.Values.ToList();
+            UpdateStatsPage(Storage);
         }
 
         public void ResetFields()
@@ -249,26 +240,28 @@ namespace Bongs_Vehicle_Viewer_V2
             filenameTracker.Content = $"File Name: {FileName}";
         }
 
-        private void NewStorage()
+        private VehicleStorage NewStorage()
         {
             if (Storage != null) { Unsubscribe(Storage); }
 
+            UserSavePath = null; // Quick Hack to trigger save as
             VehicleFactory.ResetUID();
             FileName = "NewStorage.json";
             Storage = new("New Storage");
             Subscribe(Storage);
             OnNewOrOpen($"Created New Storage"); 
+            return Storage;
         }
 
-        //This is not automatic anymore. Consider setting a flag and possibly prompting user.
-        private void SaveVehicleStorage()
+        //Keep and eye on this.. when New storage is created make sure we get a save as. Hack above seems to work for now.
+        private void SaveVehicleStorage() 
         {
-            if (UserSavePath == null) TrySaveAs();
-            else if (UserSavePath != null && Storage != null) 
+            if (UserSavePath != null)
             {
                 MyFriendJson.SaveThisStorage(Storage, FileName, UserSavePath);
                 OnStorageSaved();
             }
+            else { TrySaveAs(); }
         }
 
         private void TrySaveAs()
@@ -286,15 +279,15 @@ namespace Bongs_Vehicle_Viewer_V2
             OpenFileDialog dialog = new() { InitialDirectory = path, Filter = "Json Files (*.json)| *.json", };
             if (dialog.ShowDialog(this) == true)
             {
-                if (Storage == null) { Storage = new("NewStorage"); Subscribe(Storage); }
+                Storage ??= NewStorage();
+                MyFriendJson.LoadThisUpPlease(Storage, dialog.FileName, dialog.SafeFileName);
 
                 CaptureSaveInfo(dialog.FileName);
-                MyFriendJson.LoadThisUpPlease(Storage, FileName, UserSavePath);
                 OnNewOrOpen($"{Storage.Name} Was Loaded Successfully");
             }
         }
 
-        private static void CaptureSaveInfo(string path)
+        private static void CaptureSaveInfo(string path) // This might be extra.. Getting rid of this would be gold
         {
             UserSavePath = Directory.GetParent(path)?.FullName ?? "";
             FileName = path.Substring(UserSavePath.Length + 1);
@@ -334,12 +327,9 @@ namespace Bongs_Vehicle_Viewer_V2
         {
             if (args.Key == Key.Enter)
             {
-                if (Storage != null)
-                {
-                    Storage.Name = nameInput.Text;
-                    storageTracker.Content = $"Storage: {nameInput.Text}";
-                    dataGrid.Focus();
-                }
+                Storage.Name = nameInput.Text;
+                storageTracker.Content = $"Storage: {nameInput.Text}";
+                dataGrid.Focus();
             }
         }
 
@@ -398,10 +388,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void OnRemoveBtnPress(object obj, RoutedEventArgs args)
         {
-            if (Storage != null && Selected != null)
-            {
-                if (!Storage.TryRemoveVehicle(Selected.ID)) { LogSystemInfo("FAILED TO REMOVE VEHICLE"); }
-            }
+            if (Selected != null && !Storage.TryRemoveVehicle(Selected.ID)) { LogSystemInfo("FAILED TO REMOVE VEHICLE"); }
         }
 
         private void OnTypeChange(object obj, SelectionChangedEventArgs args) => RebuildProperties();
