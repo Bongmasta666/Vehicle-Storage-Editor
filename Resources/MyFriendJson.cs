@@ -17,6 +17,10 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
 {
     public static class MyFriendJson
     {
+        public static readonly string ResourcesDir = WhereAreMyResource();
+        public static readonly string ImagesDir = Path.Combine(ResourcesDir, "Images");
+        public static readonly string DefaultSaveDir = Path.Combine(ResourcesDir, "SaveData");
+
         public static readonly JsonSerializerSettings jsonSettings = new()
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -31,18 +35,19 @@ namespace Bongs_Vehicle_Viewer_V2.Resources
             File.WriteAllText(path, json);
         }
 
-        public static void LoadThisUpPlease(VehicleStorage storage, string filePath)
+        public static void LoadThisUpPlease(VehicleStorage storage, string fileName, string dir)
         {
-            var contents = File.ReadAllText(filePath);
+            string path = Path.Combine(dir, fileName);
+            var contents = File.ReadAllText(path);
             StorageData data = JsonConvert.DeserializeObject<StorageData>(contents, jsonSettings);
-            storage.LoadFromData(data);  
+            storage.LoadFromData(data);
         }
 
         public static string WhereAreMyResource()
         {
             var targetDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location)?.Parent?.Parent?.Parent;
             if (targetDir != null) { return Path.Combine(targetDir.FullName, "Resources"); }
-            else { throw new DirectoryNotFoundException("Could not locate your resource directory"); }
+            else { throw new DirectoryNotFoundException("Could not locate your resource directory"); } // this will have to change
         }
     }
 }

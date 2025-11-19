@@ -10,6 +10,7 @@ using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -18,19 +19,15 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-
 namespace Bongs_Vehicle_Viewer_V2
 {
     public partial class MainWindow : Window
     {
-        public static readonly string ResourcesDir = MyFriendJson.WhereAreMyResource();
-        public static readonly string ImagesDir = Path.Combine(ResourcesDir, "Images");
-        public static readonly string DefaultSaveDir = Path.Combine(ResourcesDir, "SaveData");
-
+        //This should be addressed at some point too
         public static string? FileName { get; private set; }
-        public static string? LastKnownPath { get; private set; }
-        private static string SavePath => string.IsNullOrEmpty(LastKnownPath) ? DefaultSaveDir : LastKnownPath;
+        public static string? UserSavePath { get; private set; }
 
+        public UserSettings settings = new();
 
         public VehicleStorage? Storage { get; private set; }
         public Vehicle? Selected { get; private set; }
@@ -43,10 +40,8 @@ namespace Bongs_Vehicle_Viewer_V2
         private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - yearMod, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
-
-
         public static readonly BitmapImage bgImg = 
-            ControlTools.GetImageFromURI(Path.Combine(ImagesDir, "Abstract_AI_Art.png"), UriKind.RelativeOrAbsolute);
+            ControlTools.GetImageFromURI(Path.Combine(MyFriendJson.ImagesDir, "Abstract_AI_Art.png"), UriKind.RelativeOrAbsolute);
 
         public static readonly SolidColorBrush GBDark = new() { Color = (Color)ColorConverter.ConvertFromString("#306230") };
         public static readonly SolidColorBrush GBDLighter = new() { Color = (Color)ColorConverter.ConvertFromString("#9BBC0F") };
@@ -55,6 +50,14 @@ namespace Bongs_Vehicle_Viewer_V2
         public static readonly ColorScheme matrixScheme = new(){ Name="Matrix", BGC = Brushes.Black, FGC = Brushes.Lime };
         public static readonly ColorScheme neonScheme = new() { Name = "Neon", BGC = Brushes.Indigo, FGC = Brushes.Aqua };
         public static readonly ColorScheme gameboyScheme = new() { Name = "Gameboy", BGC = GBDark, FGC = GBDLighter };
+
+        public readonly static Dictionary<string, ColorScheme> Themes = new()
+        {
+            ["Standard"] = standardScheme,
+            ["Gameboy"] = gameboyScheme,
+            ["Matrix"] = matrixScheme,
+            ["Neon"] = neonScheme,
+        };
 
         public MainWindow()
         {
@@ -80,7 +83,13 @@ namespace Bongs_Vehicle_Viewer_V2
 
             rootGrid.Background = new ImageBrush(bgImg);
             statusBar.StartSystemClock();
-            UpdateDebugPage();
+            LoadSettings();
+
+
+            //Uncomment below to load sample data
+            //Storage = new("");
+            //MyFriendJson.LoadThisUpPlease(Storage, "SampleStorage.json", MyFriendJson.DefaultSaveDir);
+            //OnNewOrOpen("Loaded Sample Data");
         }
 
         private void RebuildProperties()
@@ -94,7 +103,7 @@ namespace Bongs_Vehicle_Viewer_V2
             PropertyInfo[] concrete = VehicleFactory.GetConcreteProps(typeSelector.ItemName);
             ConcreteFields = BuildFromPropInfo(concrete);
             foreach (LabeledControl control in ConcreteFields.Values) { AddToPropertyGrid(control); }
-   
+
         }
 
         private void AddToPropertyGrid(LabeledControl control)
@@ -218,18 +227,6 @@ namespace Bongs_Vehicle_Viewer_V2
             ResetFields();
         }
 
-        private void OnPropScrollValueChange(object obj, RoutedPropertyChangedEventArgs<double> args)
-        {
-            propertyScrollView.ScrollToVerticalOffset(args.NewValue);
-        }
-
-        private void OnPropScrollChanged(object obj, ScrollChangedEventArgs args)
-        {
-            propertyScrollBar.Maximum = args.ExtentHeight - args.ViewportHeight;
-            propertyScrollBar.ViewportSize = args.ViewportHeight;
-            propertyScrollBar.Value = args.VerticalOffset;
-        }
-
         //Pretty limited right now and need better handling. For nnow it does the trick.
         private void OnSearchBarSubmit(object obj, KeyEventArgs args)
         {
@@ -272,10 +269,9 @@ namespace Bongs_Vehicle_Viewer_V2
 
         private void UpdateDebugPage()
         {       
-            directoryTracker.Content = $"Save Directory: {SavePath ?? "Undefined"}";
+            directoryTracker.Content = $"Save Directory: {UserSavePath ?? "Undefined"}";
             filenameTracker.Content = $"File Name: {FileName ?? "Undefined"}";
         }
-
 
         public static Dictionary<string, LabeledControl> BuildFromPropInfo(PropertyInfo[] propArray)
         {
@@ -355,23 +351,6 @@ namespace Bongs_Vehicle_Viewer_V2
             }
         }
 
-        private void TryLoad()
-        {
-            OpenFileDialog dialog = new(){ InitialDirectory = SavePath, Filter = "Json Files (*.json)| *.json", };
-            if (dialog.ShowDialog(this) == true)            
-            {
-                FileName = dialog.SafeFileName;
-                LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
-                if (Storage == null) { Storage = new("NewStorage"); Subscribe(Storage); }
-
-                try
-                {
-                    MyFriendJson.LoadThisUpPlease(Storage, dialog.FileName);
-                    OnNewOrOpen($"{Storage.Name} Was Loaded Successfully");           
-                }
-                catch (Exception ex){ LogSystemInfo(ex.Message); }
-            }
-        }
 
         private void NewStorage()
         {
@@ -381,32 +360,17 @@ namespace Bongs_Vehicle_Viewer_V2
             FileName = "NewStorage.json";
             Storage = new("New Storage");
             Subscribe(Storage);
-            OnNewOrOpen($"Created New Storage {FileName}"); 
-        }
-
-        private void OnNewOrOpen(string message)
-        {
-            RefreshUI();
-            UpdateDebugPage();
-            nameInput.IsEnabled = true;
-            storageTracker.Content = $"Storage: {Storage?.Name}";
-            LogSystemInfo(message);
+            OnNewOrOpen($"Created New Storage"); 
         }
 
         //This is not automatic anymore. Consider setting a flag and possibly prompting user.
-        private void SaveToJson()
+        private void SaveVehicleStorage()
         {
-            if (FileName == null) TrySaveAs(); //Be Wary of infinite loop.
-            else if (FileName != null && Storage != null)
+            if (FileName == null || UserSavePath == null) TrySaveAs();
+            else if (FileName != null && UserSavePath != null && Storage != null) 
             {
-                try
-                {   
-                    MyFriendJson.SaveThisStorage(Storage, FileName, SavePath);
-                    fileSaveTracker.Content = $"Last Save: {statusBar.TimeShowing}";
-                    LogSystemInfo($"Vehicles saved to {FileName}");
-                    UpdateDebugPage();
-                }
-                catch (Exception ex) { LogSystemInfo(ex.Message); }
+                MyFriendJson.SaveThisStorage(Storage, FileName, UserSavePath);
+                OnStorageSaved();
             }
         }
 
@@ -415,10 +379,28 @@ namespace Bongs_Vehicle_Viewer_V2
             SaveFileDialog dialog = new() { FileName = FileName ?? "NewFile.json", Filter = "Json Files (*.json)| *.json" };
             if (dialog.ShowDialog(this) == true) 
             {
-                FileName = dialog.SafeFileName;
-                LastKnownPath = Directory.GetParent(dialog.FileName)?.FullName;
-                SaveToJson();
+                CaptureSaveInfo(dialog.FileName);
+                SaveVehicleStorage();
             }
+        }
+
+        private void TryLoad(string path)
+        {
+            OpenFileDialog dialog = new() { InitialDirectory = path, Filter = "Json Files (*.json)| *.json", };
+            if (dialog.ShowDialog(this) == true)
+            {
+                if (Storage == null) { Storage = new("NewStorage"); Subscribe(Storage); }
+
+                CaptureSaveInfo(dialog.FileName);
+                MyFriendJson.LoadThisUpPlease(Storage, FileName, UserSavePath);
+                OnNewOrOpen($"{Storage.Name} Was Loaded Successfully");
+            }
+        }
+
+        private static void CaptureSaveInfo(string path)
+        {
+            UserSavePath = Directory.GetParent(path)?.FullName ?? "";
+            FileName = path.Substring(UserSavePath.Length + 1);
         }
 
         private void Subscribe(VehicleStorage storage)
@@ -436,66 +418,69 @@ namespace Bongs_Vehicle_Viewer_V2
         }
 
         private void OnStorageNameChange(object obj, KeyEventArgs args) 
-        { 
-            if (args.Key == Key.Enter )
-            {
-                UpdateStorageName(nameInput.Text);
-                dataGrid.Focus();
-            }           
-        }
-
-        private void UpdateStorageName(string name)
         {
-            if (Storage != null)
+            if (args.Key == Key.Enter) 
             {
-                Storage.Name = name;
-                storageTracker.Content = $"Storage: {name}";
+                if (Storage != null)
+                {
+                    Storage.Name = nameInput.Text;
+                    storageTracker.Content = $"Storage: {nameInput.Text}";
+                    dataGrid.Focus();
+                }
             }
         }
 
-        //Saving to prefs or just save folder doesnt hurt
+        private void OnNewOrOpen(string message)
+        {
+            nameInput.IsEnabled = true;
+            storageTracker.Content = $"Storage: {Storage?.Name}";
+            LogSystemInfo(message);
+            UpdateDebugPage();
+            RefreshUI();
+        }
+
+        private void OnStorageSaved()
+        {
+            fileSaveTracker.Content = $"Last Save: {statusBar.TimeShowing}";
+            LogSystemInfo($"Vehicle Storage Saved");
+            UpdateDebugPage();
+        }
+
+
         private void OnDebugThemeChange(object obj, RoutedEventArgs args)
-        {         
-            RadioButton rbtn = (RadioButton)obj;
-            switch (rbtn.Content)
+        {
+            if (debugOutput != null)
             {
-                case "Standard":
-                    SetTheme(standardScheme); break;
-                case "Gameboy":
-                    SetTheme(gameboyScheme); break;
-                case "Matrix":
-                    SetTheme(matrixScheme); break;
-                case "Neon":
-                    SetTheme(neonScheme); break;
-                default: break;
+                RadioButton rbtn = (RadioButton)obj;
+                string value = rbtn.Content.ToString() ?? "Standard";
+                SetTheme(Themes[value]);
+                settings.Theme = value;
+                SaveSettings();
             }
-            if (tabControl != null) { tabControl.SelectedIndex = 2; }
+        }
+
+        public void SaveSettings()
+        {
+            var contents = JsonConvert.SerializeObject(settings, MyFriendJson.jsonSettings);
+            var path = Path.Combine(MyFriendJson.DefaultSaveDir, "Settings.json");
+            File.WriteAllText(path, contents);
+        }
+
+        public void LoadSettings()
+        {
+            var path = Path.Combine(MyFriendJson.DefaultSaveDir, "Settings.json");
+            var contents = File.ReadAllText(path);
+            settings = JsonConvert.DeserializeObject<UserSettings>(contents, MyFriendJson.jsonSettings);
+
+            SetTheme(Themes[settings.Theme]);
+            ControlTools.SetRadioBtn(settings.Theme, btnContainerTheme.Items);
         }
 
         private void SetTheme(ColorScheme theme)
         {
-            if (debugOutput != null)
-            {
-                debugOutput.Background = theme.BGC;
-                debugOutput.Foreground = theme.FGC;
-            }
-        }
-
-        private void OnColorChange(object obj, RoutedEventArgs args)
-        {
-            if (dataGrid != null)
-            {
-                RadioButton rbtn = (RadioButton)obj;
-                SolidColorBrush brush = new SolidColorBrush();
-                switch (rbtn.Content) // For now till im more awake and can figure out how to get the color from enum or something
-                {
-                    case "White": brush = Brushes.GhostWhite; break;
-                    case "Black": brush = Brushes.Black; break;
-                    case "Green": brush = Brushes.Green; break;
-                }
-                dataGrid.Background = brush;
-                tabControl.SelectedIndex = 0;
-            }
+            debugOutput.Background = theme.BGC;
+            debugOutput.Foreground = theme.FGC;
+            dataGrid.Background = theme.BGC;
         }
 
         private void LogSystemInfo(string message)
@@ -526,9 +511,9 @@ namespace Bongs_Vehicle_Viewer_V2
         private void OnResetBtnPress(object obj, RoutedEventArgs args) => ResetFields();
         private void OnUnselectBtnPress(object obj, RoutedEventArgs args) => UnselectItem();
         private void OnNewBtnPress(object obj, RoutedEventArgs args) => NewStorage();
-        private void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveToJson();
+        private void OnSaveBtnPress(object obj, RoutedEventArgs args) => SaveVehicleStorage();
         private void OnSaveAsBtnPress(object obj, RoutedEventArgs args) => TrySaveAs();
-        private void OnOpenBtnPress(object obj, RoutedEventArgs args) => TryLoad();
+        private void OnOpenBtnPress(object obj, RoutedEventArgs args) => TryLoad(UserSavePath ?? "");
         private void OnExitBtnPress(object obj, RoutedEventArgs args) => Close();
     }
 
@@ -537,5 +522,10 @@ namespace Bongs_Vehicle_Viewer_V2
         public string Name { get; set; } = "Standard";
         public Brush BGC { get; set; } = Brushes.White;
         public Brush FGC { get; set; } = Brushes.Black;
+    }
+
+    public class UserSettings
+    {
+        public string Theme { get; set; } = "Gameboy";
     }
 }

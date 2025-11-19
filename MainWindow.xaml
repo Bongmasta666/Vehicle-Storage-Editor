@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Bongs_Vehicle_Viewer_V2" 
         xmlns:customcontrols="clr-namespace:Bongs_Vehicle_Viewer_V2.Resources.CustomControls"
         mc:Ignorable="d"
-        Icon="/Resources/Images/Icons/Car_Sport.png" Title="Bongs Vehicle Viewer" Height="488" MinHeight="488" Width="640" WindowStartupLocation="CenterScreen">
+        Icon="/Resources/Images/Icons/Car_Sport.png" Title="Bongs Vehicle Viewer" Height="480" MinHeight="400" Width="640" WindowStartupLocation="CenterScreen">
     
     <Grid x:Name="rootGrid"  Background="DarkGray">
         <Grid.RowDefinitions>
@@ -46,12 +46,7 @@
             </MenuItem>
 
             <MenuItem Header="Options">
-                <MenuItem Header="Table Background" StaysOpenOnClick="False">
-                    <RadioButton Content="White" GroupName="tableColorBtns" IsChecked="True" Checked="OnColorChange"/>
-                    <RadioButton Content="Black" GroupName="tableColorBtns" IsChecked="False" Checked="OnColorChange"/>
-                    <RadioButton Content="Green" GroupName="tableColorBtns" IsChecked="False" Checked="OnColorChange"/>
-                </MenuItem>
-                <MenuItem Header="Debug Theme" StaysOpenOnClick="False">
+                <MenuItem x:Name="btnContainerTheme" Header="Theme" StaysOpenOnClick="False">
                     <RadioButton Content="Standard" GroupName="dBugThemeBtns" IsChecked="False" Checked="OnDebugThemeChange"/>
                     <RadioButton Content="Gameboy" GroupName="dBugThemeBtns" IsChecked="False" Checked="OnDebugThemeChange"/>
                     <RadioButton Content="Matrix" GroupName="dBugThemeBtns" IsChecked="True" Checked="OnDebugThemeChange"/>
@@ -77,9 +72,9 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <ScrollBar x:Name="propertyScrollBar" Grid.Column="0" MinWidth="0" Width="12" HorizontalAlignment="Left" Visibility="Visible" ValueChanged="OnPropScrollValueChange"/>
-                        <ScrollViewer x:Name="propertyScrollView" Height="320" Margin="4,8,4,4" Grid.Column="1" VerticalScrollBarVisibility="Hidden" ScrollChanged="OnPropScrollChanged">
-                            <Grid x:Name="propertyGrid" Width="128" HorizontalAlignment="Left">
+                       
+                        <ScrollViewer x:Name="propertyScrollView"  Grid.Column="1" VerticalScrollBarVisibility="Auto" Margin="1,8">
+                            <Grid x:Name="propertyGrid" Width="128" Margin="4,4,8,4" HorizontalAlignment="Left">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -118,7 +113,7 @@
                             <Label x:Name="vehicleIDLabel" Content="Next ID: 100200"  Grid.Column="2" HorizontalAlignment="Right"/>
                         </Grid>
 
-                        <DataGrid x:Name="dataGrid" Grid.Row="1" Margin="2" Background="GhostWhite" IsReadOnly="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
+                        <DataGrid x:Name="dataGrid" Grid.Row="1" Margin="2" Background="White" IsReadOnly="True" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto" SelectionMode="Single" AutoGenerateColumns="False" HeadersVisibility="Column" SelectionChanged="OnVehicleSelected">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" MinWidth="64" Width="Auto" Binding="{Binding ID}"/>
                                 <DataGridTextColumn Header="Year" MinWidth="64" Width="Auto" Binding="{Binding Year}"/>
@@ -137,12 +132,12 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8,4" VerticalAlignment="Center">
-                            <Button x:Name="submitBtn" Content="Submit" Width="64" Margin="4,2" FontSize="12" Click="OnSubmitBtnPress"/>
-                            <Button x:Name="resetBtn" Content="Clear" Width="64" Margin="4,2" FontSize="12" Click="OnResetBtnPress"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="1,6" VerticalAlignment="Center">
+                            <Button x:Name="submitBtn" Content="Submit" Width="64" Margin="4,1" FontSize="12" Click="OnSubmitBtnPress"/>
+                            <Button x:Name="resetBtn" Content="Clear" Width="64" Margin="4,1" FontSize="12" Click="OnResetBtnPress"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="4" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="1,6" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <Button x:Name="removeBtn" Content="Remove" Width="64" Margin="4,1" FontSize="12" Click="OnRemoveBtnPress" IsEnabled="False"/>
                             <TextBox x:Name="searchBar" MinWidth="140" Margin="6,0,6,0" Height="20" KeyDown="OnSearchBarSubmit"/>
                             <Button x:Name="unselectBtn" Content="Unselect" Width="64" Margin="4,1" FontSize="12" Click="OnUnselectBtnPress" IsEnabled="False"/>
@@ -181,11 +176,11 @@
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
-                            <Label x:Name="filenameTracker" Content="File Name: None" Grid.Column="0"/>
+                            <Label x:Name="filenameTracker" Content="File Name: Undefined" Grid.Column="0"/>
                             <Label x:Name="fileSaveTracker" Content="Last Save: 00:00:00 AM" Grid.Column="1"/>
                         </Grid>
                         <Separator/>
-                        <Label x:Name="directoryTracker" Content="Save Directory: "/>
+                        <Label x:Name="directoryTracker" Content="Save Directory: Undefined"/>
                     </StackPanel>
                     <ScrollViewer Grid.Row="1">
                         <TextBlock x:Name="debugOutput" Background="Black" Foreground="Lime" Margin="4" Padding="6" Text="" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>

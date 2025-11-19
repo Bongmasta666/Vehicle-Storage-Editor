@@ -7,6 +7,7 @@
 
 using System.Collections;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -52,6 +53,15 @@ namespace Bongs_Vehicle_Viewer_V2.Resources.CustomControls
                 else { return false; }
             }
             return true;
+        }
+
+        public static void SetRadioBtn(string name, ItemCollection collection)
+        {
+            foreach (var item in collection.SourceCollection)
+            {
+                RadioButton b = (RadioButton)item;
+                if (b.Content.ToString() == name) { b.IsChecked = true; break; }
+            }
         }
     }
 }
