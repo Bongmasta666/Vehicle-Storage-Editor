@@ -148,8 +148,8 @@
             
             <TabItem Header="Statistics">
                 <Grid Background="WhiteSmoke">
-                    <Border BorderBrush="DarkGray" BorderThickness="2" HorizontalAlignment="Stretch" Background="WhiteSmoke">
-                        <StackPanel>
+                    <Border BorderBrush="DarkGray" BorderThickness="2" HorizontalAlignment="Stretch">
+                        <StackPanel x:Name="trackPanel" Background="WhiteSmoke">
                             <Label x:Name="storageTracker" Content="Storage: Empty"/>
                             <Label x:Name="motorizedTracker" Content="Motorized Vehicles: 0"/>
                             <Label x:Name="aquaticTracker" Content="Aquatic Vehicles: 0"/>

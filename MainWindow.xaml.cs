@@ -36,8 +36,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public Dictionary<string, LabeledControl> ExtendedFields { get; private set; } = [];
         public Dictionary<string, LabeledControl> ConcreteFields { get; private set; } = [];
 
-        private static readonly int yearMod = 100;
-        private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - yearMod, 2026);
+        private readonly List<int> ValidYears = VehicleFactory.GetValidYears(2026 - 100, 2026);
         private readonly List<string> classNames = VehicleFactory.GetClassNames();
 
         public static readonly BitmapImage bgImg = 
@@ -46,17 +45,12 @@ namespace Bongs_Vehicle_Viewer_V2
         public static readonly SolidColorBrush GBDark = new() { Color = (Color)ColorConverter.ConvertFromString("#306230") };
         public static readonly SolidColorBrush GBDLighter = new() { Color = (Color)ColorConverter.ConvertFromString("#9BBC0F") };
 
-        public static readonly ColorScheme standardScheme = new(){ Name="Standard", BGC = Brushes.White, FGC = Brushes.Black};
-        public static readonly ColorScheme matrixScheme = new(){ Name="Matrix", BGC = Brushes.Black, FGC = Brushes.Lime };
-        public static readonly ColorScheme neonScheme = new() { Name = "Neon", BGC = Brushes.Indigo, FGC = Brushes.Aqua };
-        public static readonly ColorScheme gameboyScheme = new() { Name = "Gameboy", BGC = GBDark, FGC = GBDLighter };
-
         public readonly static Dictionary<string, ColorScheme> Themes = new()
         {
-            ["Standard"] = standardScheme,
-            ["Gameboy"] = gameboyScheme,
-            ["Matrix"] = matrixScheme,
-            ["Neon"] = neonScheme,
+            ["Standard"] = new ColorScheme(){ Name = "Standard", BGC = Brushes.GhostWhite, FGC = Brushes.Black },
+            ["Gameboy"] = new ColorScheme() { Name = "Gameboy", BGC = GBDark, FGC = GBDLighter },
+            ["Matrix"] = new ColorScheme() { Name = "Matrix", BGC = Brushes.Black, FGC = Brushes.LimeGreen },
+            ["Neon"] = new ColorScheme() { Name = "Neon", BGC = Brushes.Indigo, FGC = Brushes.Aqua },
         };
 
         public MainWindow()
@@ -87,9 +81,9 @@ namespace Bongs_Vehicle_Viewer_V2
 
 
             //Uncomment below to load sample data
-            //Storage = new("");
-            //MyFriendJson.LoadThisUpPlease(Storage, "SampleStorage.json", MyFriendJson.DefaultSaveDir);
-            //OnNewOrOpen("Loaded Sample Data");
+            Storage = new("");
+            MyFriendJson.LoadThisUpPlease(Storage, "SampleStorage.json", MyFriendJson.DefaultSaveDir);
+            OnNewOrOpen("Loaded Sample Data");
         }
 
         private void RebuildProperties()
@@ -103,7 +97,6 @@ namespace Bongs_Vehicle_Viewer_V2
             PropertyInfo[] concrete = VehicleFactory.GetConcreteProps(typeSelector.ItemName);
             ConcreteFields = BuildFromPropInfo(concrete);
             foreach (LabeledControl control in ConcreteFields.Values) { AddToPropertyGrid(control); }
-
         }
 
         private void AddToPropertyGrid(LabeledControl control)
@@ -417,19 +410,6 @@ namespace Bongs_Vehicle_Viewer_V2
             storage.VehicleRemoved -= OnVehicleRemoved;
         }
 
-        private void OnStorageNameChange(object obj, KeyEventArgs args) 
-        {
-            if (args.Key == Key.Enter) 
-            {
-                if (Storage != null)
-                {
-                    Storage.Name = nameInput.Text;
-                    storageTracker.Content = $"Storage: {nameInput.Text}";
-                    dataGrid.Focus();
-                }
-            }
-        }
-
         private void OnNewOrOpen(string message)
         {
             nameInput.IsEnabled = true;
@@ -446,6 +426,18 @@ namespace Bongs_Vehicle_Viewer_V2
             UpdateDebugPage();
         }
 
+        private void OnStorageNameChange(object obj, KeyEventArgs args)
+        {
+            if (args.Key == Key.Enter)
+            {
+                if (Storage != null)
+                {
+                    Storage.Name = nameInput.Text;
+                    storageTracker.Content = $"Storage: {nameInput.Text}";
+                    dataGrid.Focus();
+                }
+            }
+        }
 
         private void OnDebugThemeChange(object obj, RoutedEventArgs args)
         {
@@ -457,6 +449,23 @@ namespace Bongs_Vehicle_Viewer_V2
                 settings.Theme = value;
                 SaveSettings();
             }
+        }
+
+        private void SetTheme(ColorScheme theme)
+        {
+            debugOutput.Background = theme.BGC;
+            debugOutput.Foreground = theme.FGC;
+            dataGrid.Background = theme.BGC;
+            dataGrid.RowBackground = (theme.Name != "Standard") ? theme.FGC : Brushes.White;
+
+            trackPanel.Background = theme.BGC;
+            storageTracker.Foreground = theme.FGC;
+            milesTracker.Foreground = theme.FGC;
+            priceTracker.Foreground = theme.FGC;
+            motorizedTracker.Foreground = theme.FGC;
+            aerialTracker.Foreground = theme.FGC;
+            aquaticTracker.Foreground = theme.FGC;
+            totalTracker.Foreground = theme.FGC;
         }
 
         public void SaveSettings()
@@ -474,13 +483,6 @@ namespace Bongs_Vehicle_Viewer_V2
 
             SetTheme(Themes[settings.Theme]);
             ControlTools.SetRadioBtn(settings.Theme, btnContainerTheme.Items);
-        }
-
-        private void SetTheme(ColorScheme theme)
-        {
-            debugOutput.Background = theme.BGC;
-            debugOutput.Foreground = theme.FGC;
-            dataGrid.Background = theme.BGC;
         }
 
         private void LogSystemInfo(string message)
