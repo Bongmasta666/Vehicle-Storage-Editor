@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Bongs_Vehicle_Viewer_V2" 
         xmlns:customcontrols="clr-namespace:Bongs_Vehicle_Viewer_V2.Resources.CustomControls"
         mc:Ignorable="d"
-        Icon="/Resources/Images/Icons/Car_Sport.png" Title="Bongs Vehicle Viewer" Height="480" MinHeight="400" Width="640" WindowStartupLocation="CenterScreen">
+        Icon="/Resources/Images/Icons/Car_Sport.png" Title="Vehicle Storage Editor" Height="480" MinHeight="400" Width="640" WindowStartupLocation="CenterScreen">
     
     <Grid x:Name="rootGrid"  Background="DarkGray">
         <Grid.RowDefinitions>

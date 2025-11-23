@@ -10,6 +10,7 @@ using Bongs_Vehicle_Viewer_V2.Resources.CustomControls;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem;
 using Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.abstracts;
 using Microsoft.Win32;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -26,7 +27,7 @@ namespace Bongs_Vehicle_Viewer_V2
         public static string? UserSavePath { get; private set; }
 
         public VehicleStorage Storage { get; private set; } 
-        public Vehicle? Selected { get; private set; }
+        public Vehicle? Selected => (Vehicle)dataGrid.SelectedItem;
 
         public Dictionary<string, LabeledControl> VehicleFields { get; private set; } = [];
         public Dictionary<string, LabeledControl> ExtendedFields { get; private set; } = [];
@@ -155,16 +156,15 @@ namespace Bongs_Vehicle_Viewer_V2
         }
 
         private void OnVehicleSelected(object obj, RoutedEventArgs args)
-        {         
-            if (dataGrid.SelectedIndex != -1)
+        {
+            if (Selected != null)
             {
-                Selected = (Vehicle)dataGrid.SelectedItem;
-                ControlTools.AssignFromObject(Selected, VehicleFields);
-                ControlTools.AssignFromObject(Selected, ExtendedFields);
-                ControlTools.AssignFromObject(Selected, ConcreteFields);
-
-                typeSelector.ItemIndex = classNames.IndexOf(Selected.Class);
+                typeSelector.ItemIndex = classNames.IndexOf(Selected.Class); //This is causing a race condition
                 yearSelector.ItemIndex = ValidYears.IndexOf(Selected.Year);
+
+                ControlTools.AssignFromObject(Selected, VehicleFields);  //
+                ControlTools.AssignFromObject(Selected, ExtendedFields); //  These have to come after typeSelector Change
+                ControlTools.AssignFromObject(Selected, ConcreteFields); //
 
                 submitBtn.Content = "Update";
                 searchBar.Text = Selected.ID.ToString();
@@ -172,7 +172,6 @@ namespace Bongs_Vehicle_Viewer_V2
             }
             else { removeBtn.IsEnabled = unselectBtn.IsEnabled = false; }
         }
-
 
         private void OnVehicleAdded(object? obj, EventArgs args)
         {
@@ -216,7 +215,7 @@ namespace Bongs_Vehicle_Viewer_V2
 
         public void UnselectItem()
         {
-            Selected = null;
+ 
             dataGrid.SelectedIndex = -1;
             submitBtn.Content = "Submit";
             searchBar.Text = ""; 

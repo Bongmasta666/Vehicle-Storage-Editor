@@ -4,9 +4,9 @@
   "List": [
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Truck, Bongs_Vehicle_Viewer_V2",
-      "Mileage": 2000.0,
-      "Class": "Truck",
+      "Mileage": 10000.0,
       "ID": 100203,
+      "Class": "Truck",
       "Year": 2023,
       "Make": "Tesla",
       "Model": "Cybertruck",
@@ -17,8 +17,8 @@
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
       "Mileage": 225000.0,
-      "Class": "Car",
       "ID": 100204,
+      "Class": "Car",
       "Year": 1992,
       "Make": "Dodge",
       "Model": "Charger",
@@ -28,9 +28,9 @@
     },
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
-      "Mileage": 0.0,
-      "Class": "Car",
+      "Mileage": 1000.0,
       "ID": 100205,
+      "Class": "Car",
       "Year": 1982,
       "Make": "DMC",
       "Model": "Delorean",
@@ -41,8 +41,8 @@
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.motorized.Car, Bongs_Vehicle_Viewer_V2",
       "Mileage": 80500.0,
-      "Class": "Car",
       "ID": 100207,
+      "Class": "Car",
       "Year": 1984,
       "Make": "Cadillac",
       "Model": "Ecto-1",
@@ -53,8 +53,8 @@
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.aerial.Blimp, Bongs_Vehicle_Viewer_V2",
       "MaxAltitude": 9842.0,
-      "Class": "Blimp",
       "ID": 100208,
+      "Class": "Blimp",
       "Year": 1937,
       "Make": "Zepplin",
       "Model": "Hindenburg",
@@ -64,9 +64,9 @@
     },
     {
       "$type": "Bongs_Vehicle_Viewer_V2.Resources.VehicleSystem.Vehicles.aerial.Plane, Bongs_Vehicle_Viewer_V2",
-      "MaxAltitude": 41000.0,
-      "Class": "Plane",
+      "MaxAltitude": 48000.0,
       "ID": 100209,
+      "Class": "Plane",
       "Year": 2025,
       "Make": "Boeing",
       "Model": "TrumpForce1",
