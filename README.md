@@ -10,7 +10,7 @@ Highlights:
   - Json seralizing to make external editing easy.
   - Dynamic property and class handling using System.Reflection.
 
-# Adding Custom Vehicle Types:
+# Adding Custom Vehicle Types
 
 Heirarchy: Base -> Extended -> Concrete
 
