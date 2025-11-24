@@ -3,7 +3,7 @@
 Key Features:
   - Add/Edit/Remove Vehicles 
   - Search Vehicles by ID
-  - Save & Load Differnt Storages
+  - Save & Load Different Storages
   - Storage Data Tracking
 
 Highlights:
