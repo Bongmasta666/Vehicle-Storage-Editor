@@ -1,6 +1,6 @@
 ﻿/* File: MainWindow.xaml.cs
  * Author: Michael Millar
- * Date: 19-11-2025
+ * Date: 23-11-2025
  * Description: 
  * This file is the root of the application and contains code for the Main Window and marjority of the UI functionality
  */
