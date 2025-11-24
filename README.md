@@ -20,4 +20,5 @@ Pre-defined Examples: MotorizedVehicle, SpaceVehicle, AquaticVehicle, AerialVehi
 
 To add a new Vehicle type you can inherit from one of the pre-defined Extensions or create your own.
 You can add properties to an extended class or concrete class and they will automatically be handled.
+
 ! Property handling is currently limited and should only be of type Int, Double, or String !
